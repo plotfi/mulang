@@ -7,5 +7,5 @@ define _S = struct {
   b: float32
 }
 
-define S = type S
+define S = type _S
 
