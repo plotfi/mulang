@@ -1,4 +1,11 @@
-define foo = lambda () -> int {
-  return 42
+define foo = lambda (a: int32) -> int {
+  return a + 42
 }
+
+define _S = struct {
+  a: int32,
+  b: float32
+}
+
+define S = type S
 
