@@ -3,7 +3,7 @@ define foo = lambda (a: int32) -> int {
 }
 
 define _S = struct {
-  a: int32,
+  a: int32
   b: float32
 }
 
