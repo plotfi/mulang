@@ -2,56 +2,46 @@
 #include <string>
 #include <iostream>
 
-using Type = std::string;
-
-struct TypedDecl {
+struct Defun {
   std::string name;
-  Type type;
-};
 
-struct Decl {
-  virtual std::string str() const = 0;
-};
+  Defun() = default;
 
-struct LamdaDecl : public Decl {
-  std::vector<TypedDecl> inputArgs;
-  Type returnType;
-
-  virtual std::string str() const {
-    return "lamda";
-  }
-};
-
-struct Definition {
-  std::string name;
-  Decl *content;
-
-  Definition(std::string name, Decl *content):
-    name(name), content(content) {}
-
-  std::string str() const {
-    return "(define " + name + " " +
-           content->str() +
-           ")";
-  }
-};
-
-struct TranslationUnitDecl {
-  std::string name;
-  std::vector<Definition*> children;
+  Defun(const char *name): name(name) {}
 
   void dump() const {
-    for (auto *child : children)
-      std::cout << "\n" << child->str();
+    std::cout << "\n(defun " << name << ")";
+  }
+};
+
+struct DefunList {
+  std::vector<Defun*> funcs;
+
+  DefunList() = delete;
+  DefunList(Defun *func) {
+    funcs.push_back(func);
+  }
+
+  DefunList *append(Defun *func) {
+    funcs.push_back(func);
+    return this;
+  };
+
+  void dump() const {
+    for (auto func : funcs)
+      func->dump();
+  }
+};
+
+struct TranslationUnit {
+  std::string name = "main";
+  DefunList *funcs = nullptr;
+
+  TranslationUnit() = delete;
+  TranslationUnit(DefunList *funcs): funcs(funcs) {}
+
+  void dump() const {
+    funcs->dump();
   };
 };
 
-
-
-inline std::vector<Definition*> *AppendDecl(void *decls, const char *name) {
-  std::vector<Definition*> *Decls = (std::vector<Definition*>*)decls;
-  if (!Decls)
-    Decls = new std::vector<Definition*>();
-  Decls->push_back(new Definition(std::string(name), nullptr));
-  return Decls;
-}

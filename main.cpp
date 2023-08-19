@@ -5,7 +5,8 @@
 
 int yyparse();
 extern FILE *yyin;
-extern TranslationUnitDecl *topnode;
+extern TranslationUnit *topnode;
+
 
 #if YYDEBUG
 extern int yydebug;
@@ -25,6 +26,7 @@ int main(int argc, char **argv) {
   yyparse();
   fclose(yyin);
 
-  std::cout << "TOPNODE NAME: " << topnode << "\n";
+  std::cout << "TOPNODE NAME: " << "main" << "\n";
   topnode->dump();
+  std::cout << "\n\n";
 }

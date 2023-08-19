@@ -12,13 +12,21 @@ IS      (u|U|l|L)*
 int check_type();
 void count();
 void comment();
+
+typedef struct yyvalType {
+  int linenum;
+  char *value;
+  char *tokText;
+} yyvalType;
+
+yyvalType *makeyyvalType(int linenum, char *value, char *token);
+int linenum = 0;
 %}
 
 %%
 "/*"                   { comment(); }
 
-"let"                  { count(); return(LET); }
-"type"                 { count(); return(TYPE); }
+"var"                  { count(); return(VAR); }
 "fn"                   { count(); return(FUNCTION); }
 
 "char"                 { count(); return(CHAR); }
@@ -32,11 +40,11 @@ void comment();
 "short"                { count(); return(SHORT); }
 "signed"               { count(); return(SIGNED); }
 "unsigned"             { count(); return(UNSIGNED); }
-"void"                 { count(); return(VOID); }
 "while"                { count(); return(WHILE); }
 
 {L}({L}|{D})*          { count();
                          yylval = yytext;
+                         yylval = (void*)makeyyvalType(linenum, yytext, "IDENTIFIER");
                          return(check_type()); }
 
 0[xX]{H}+{IS}?         { count(); return(CONSTANT); }
