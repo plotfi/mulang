@@ -29,18 +29,22 @@ int linenum = 0;
 "var"                  { count(); return(VAR); }
 "fn"                   { count(); return(FUNCTION); }
 
-"char"                 { count(); return(CHAR); }
-"double"               { count(); return(DOUBLE); }
 "else"                 { count(); return(ELSE); }
-"float"                { count(); return(FLOAT); }
 "if"                   { count(); return(IF); }
-"int"                  { count(); return(INT); }
-"long"                 { count(); return(LONG); }
 "return"               { count(); return(RETURN); }
-"short"                { count(); return(SHORT); }
-"signed"               { count(); return(SIGNED); }
-"unsigned"             { count(); return(UNSIGNED); }
 "while"                { count(); return(WHILE); }
+
+"char"                 { count(); return(CHAR); }
+"float64"              { count(); return(DOUBLE); }
+"float32"              { count(); return(FLOAT); }
+"int32"                { count(); return(INT); }
+"int64"                { count(); return(LONG); }
+"int16"                { count(); return(SHORT); }
+"int8"                 { count(); return(INT8); }
+"uint8"                { count(); return(UINT8); }
+"uint32"               { count(); return(UINT); }
+"uint64"               { count(); return(ULONG); }
+"uint16"               { count(); return(USHORT); }
 
 {L}({L}|{D})*          { count();
                          yylval = yytext;
@@ -106,22 +110,23 @@ int yywrap() { return 1; }
 #endif
 
 void comment() {
-
   char c, c1;
 
-  unsigned isCommentIncomplete = 0;
-  while (isCommentIncomplete) {
+  while (true) {
     while ((c = YYINPUT()) != '*' && c != 0)
-      putchar(c);
-
-    isCommentIncomplete = ((c1 = YYINPUT()) != '/' && c != 0);
-
-    if (isCommentIncomplete)
-      unput(c1);
+      // putchar(c)
+    ;
+  
+    if ((c1 = YYINPUT()) != '/' && c != 0) {
+      // unput(c1);
+      continue;
+    }
+  
+    break;
   }
 
-  if (c != 0)
-    putchar(c1);
+  // if (c != 0)
+  //   putchar(c1);
 }
 
 
@@ -139,7 +144,7 @@ void count() {
       g_column++;
 
   // Remove the ECHO to skip echoing the input
-  ECHO;
+  // ECHO;
 }
 
 

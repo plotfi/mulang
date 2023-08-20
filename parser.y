@@ -34,7 +34,9 @@ yyvalType *makeyyvalType(int linenum, char *value, char *token);
 %token LE_OP GE_OP EQ_OP NE_OP
 
 %token TYPE_NAME
-%token CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE
+%token CHAR SHORT INT LONG FLOAT DOUBLE
+%token USHORT UINT ULONG
+%token INT8 UINT8
 
 %token IF ELSE WHILE RETURN
 
@@ -60,72 +62,105 @@ toplevel_declaration: mu_function_definition { $$ = $1; };
 
 mu_function_definition
   : FUNCTION IDENTIFIER '(' parameter_list ')' PTR_OP type_specifier compound_statement {
-    $$ = new Defun(static_cast<yyvalType*>($2)->value);
+    $$ = new Defun(static_cast<yyvalType*>($2)->value, static_cast<ParamList*>($4),
+                   Type::sint32_mut, static_cast<CompoundStatement*>($8));
   }
   | FUNCTION IDENTIFIER '(' ')' PTR_OP  type_specifier compound_statement {
-    $$ = new Defun(static_cast<yyvalType*>($2)->value);
-  }
-  | FUNCTION IDENTIFIER '(' parameter_list ')' compound_statement {
-    $$ = new Defun(static_cast<yyvalType*>($2)->value);
+    $$ = new Defun(static_cast<yyvalType*>($2)->value, nullptr,
+                   Type::sint32_mut, static_cast<CompoundStatement*>($7));
+  };
 
+parameter_list:
+  parameter_declaration {
+    $$ = new ParamList(static_cast<ParamDecl*>($1));
   }
-  | FUNCTION IDENTIFIER '(' ')' compound_statement {
-    $$ = new Defun(static_cast<yyvalType*>($2)->value);
-  }
-  ;
-parameter_list: parameter_declaration | parameter_list ',' parameter_declaration ;
-parameter_declaration: IDENTIFIER ':' type_specifier ;
+  | parameter_list ',' parameter_declaration {
+    $$ = static_cast<ParamList*>($1)->append(static_cast<ParamDecl*>($3));
+  };
+
+parameter_declaration:
+  IDENTIFIER ':' type_specifier {
+    $$ = new ParamDecl(static_cast<yyvalType*>($1)->value, Type::sint32_mut);
+  };
 
 /*** mu statements ***/
-statement_list: statement | statement_list statement ;
+statement_list:
+  statement {
+    $$ = new StatementList(static_cast<Statement*>($1));
+  }
+  | statement_list statement {
+    $$ = static_cast<StatementList*>($1)->append(static_cast<Statement*>($2));
+  };
+
 statement:
   compound_statement {
     debug_print("\n\n>> statement -> compound_statement");
     debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = $1;
   }
   | selection_statement {
     debug_print("\n\n>> statement -> selection_statement");
     debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = $1;
   }
   | iteration_statement {
     debug_print("\n\n>> statement -> iteration_statement");
     debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = $1;
   }
   | jump_statement {
     debug_print("\n\n>> statement -> jump_statement");
     debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = $1;
   }
   | assignment_statement {
     debug_print("\n\n>> statement -> assignment_statement");
     debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = $1;
   }
   | init_statement {
     debug_print("\n\n>> statement -> init_statement");
     debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = $1;
   };
 
-compound_statement
-  : '{' '}'
-  | '{' statement_list '}'
-  ;
+compound_statement:
+  '{' '}'  {
+    $$ = new CompoundStatement();
+  }
+  | '{' statement_list '}' {
+    $$ = new CompoundStatement(static_cast<StatementList*>($2));
+  };
 
-selection_statement
-  : IF expression compound_statement
-  | IF expression compound_statement ELSE compound_statement
-  ;
+selection_statement:
+  IF expression compound_statement {
+    $$ = new SelectionIfStatement();
+  }
+  | IF expression compound_statement ELSE compound_statement {
+    $$ = new SelectionIfStatement();
+  };
 
 iteration_statement: WHILE expression compound_statement
 jump_statement:
   RETURN expression ';' {
     debug_print("\n\n>> RETURN <expression>;");
     debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = new JumpReturnStatement();
   } ;
 
-assignment_statement: IDENTIFIER '=' expression ';' ;
-init_statement: VAR IDENTIFIER ':' type_specifier '=' expression ';' ;
+assignment_statement:
+  IDENTIFIER '=' expression ';' {
+    $$ = new AssignmentStatement();
+  };
+init_statement:
+  VAR IDENTIFIER ':' type_specifier '=' expression ';' {
+    $$ = new AssignmentStatement();
+  };
 
 /*** mu specifiers ***/
-type_specifier: CHAR | SHORT | INT | LONG | FLOAT | DOUBLE | SIGNED | UNSIGNED | TYPE_NAME ;
+type_specifier:  CHAR | UINT8 | USHORT | UINT  | ULONG |
+                         INT8 |  SHORT |  INT  |  LONG |
+                        FLOAT | DOUBLE | TYPE_NAME ;
 
 /*** mu expressions ***/
 primary_expression
@@ -227,5 +262,5 @@ extern int g_column;
 
 void yyerror(const char *s) {
   fflush(stdout);
-  debug_print("\n%*s\n%*s\n", g_column, "^", g_column, s);
+  printf("\n%*s\n%*s\n", g_column, "^", g_column, s);
 }
