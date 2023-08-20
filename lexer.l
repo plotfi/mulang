@@ -12,6 +12,7 @@ IS      (u|U|l|L)*
 int check_type();
 void count();
 void comment();
+void comment2();
 
 typedef struct yyvalType {
   int linenum;
@@ -25,6 +26,7 @@ int linenum = 0;
 
 %%
 "/*"                   { comment(); }
+"//"                   { comment2(); }
 
 "var"                  { count(); return(VAR); }
 "fn"                   { count(); return(FUNCTION); }
@@ -108,6 +110,17 @@ int yywrap() { return 1; }
 #else
 #define YYINPUT input
 #endif
+
+void comment2() {
+  char c;
+
+  while (true) {
+    while ((c = YYINPUT()) != '\n' && c != 0)
+      // putchar(c)
+    ;
+    break;
+  }
+}
 
 void comment() {
   char c, c1;
