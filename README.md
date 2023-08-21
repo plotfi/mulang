@@ -8,6 +8,8 @@ The syntax is as follows:
 
 ```mu
 
+typealias int = int32;
+
 fn fibonacci(n: int) -> int {
 
   if n < 2 {
