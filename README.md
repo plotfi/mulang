@@ -10,6 +10,8 @@ The syntax is as follows:
 
 typealias int = int32;
 
+fn 
+
 // interative fib function. No arrays so no memoization yet.
 fn fibonacci(n: int) -> int {
 
@@ -21,6 +23,10 @@ fn fibonacci(n: int) -> int {
   var current: int = 1;
   var i: int = 2;
 
+  /*
+     To Keep the language simple, while loops are the only kind of loops.
+     Theres also no increment operator since using x = x + 1 does the same job.
+  */ 
   while i <= n {
     var next: int = prev + current;
     prev = current;
@@ -33,6 +39,8 @@ fn fibonacci(n: int) -> int {
 
 fn main() -> int {
   var fib: int = fibonacci(5);
+
+  // Still have no idea how I will make strings or printing work.
   _ = printf("fibonacci of 5 is: %d\n", fib);
 
   return 0;
