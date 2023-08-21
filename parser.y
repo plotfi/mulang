@@ -154,7 +154,7 @@ assignment_statement:
   };
 init_statement:
   VAR IDENTIFIER ':' type_specifier '=' expression ';' {
-    $$ = new AssignmentStatement();
+    $$ = new InitializationStatement();
   };
 
 /*** mu specifiers ***/

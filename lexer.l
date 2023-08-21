@@ -157,7 +157,7 @@ void count() {
       g_column++;
 
   // Remove the ECHO to skip echoing the input
-  // ECHO;
+  ECHO;
 }
 
 

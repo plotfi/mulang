@@ -48,8 +48,11 @@ struct ASTList {
     return this;
   }
 
-  void dump() const {
+  void dump(unsigned indent = 0) const {
     for (auto *thing : things) {
+      std::cout << "\n";
+      for (unsigned i = 0; i < indent; i++)
+        std::cout << "\t";
       thing->dump();
     }
   }
@@ -85,12 +88,16 @@ std::ostream &operator<<(std::ostream &os, StatementType v) {
 struct Statement {
   Expression *expr = nullptr;
   virtual ~Statement() {}
-  virtual StatementType getType() const = 0;
-  virtual void dumpInternal() const = 0;
-  void dump() const {
-    std::cout << "\n(statement type: " << getType();
-    this->dumpInternal();
-    std::cout << ")\n";
+  virtual bool hasExpression() const { return false; }
+  virtual StatementType getStatementType() const = 0;
+  virtual void dumpInternal(unsigned indent = 0) const = 0;
+  void dump(unsigned indent = 0) const {
+    std::cout << '\n';
+    for (unsigned i = 0; i < indent; i++)
+      std::cout << "\t";
+    std::cout << "(statement type: " << getStatementType();
+    this->dumpInternal(indent + 1);
+    std::cout << ")";
   }
 };
 
@@ -99,11 +106,13 @@ struct CompoundStatement : public Statement {
   StatementList *statements = nullptr;
   CompoundStatement() = default;
   CompoundStatement(StatementList *statements): statements(statements) {}
-  virtual StatementType getType() const { return StatementType::Compound; }
-  virtual void dumpInternal() const {
+  virtual StatementType getStatementType() const { return StatementType::Compound; }
+  virtual void dumpInternal(unsigned indent = 0) const {
     if (statements) {
       for (auto *statement : statements->things) {
-        statement->dump();
+        for (unsigned i = 0; i < indent; i++)
+          std::cout << "\t";
+        statement->dump(indent + 1);
       }
     }
   }
@@ -112,33 +121,34 @@ struct CompoundStatement : public Statement {
 struct SelectionIfStatement : public Statement {
   CompoundStatement *ifBranch = nullptr;
   CompoundStatement *elseBranch = nullptr;
-  virtual StatementType getType() const { return StatementType::SelectionIf; }
-  virtual void dumpInternal() const {
+  virtual bool hasExpression() const override { return true; }
+  virtual StatementType getStatementType() const override { return StatementType::SelectionIf; }
+  virtual void dumpInternal(unsigned indent = 0) const override {
   }
 };
 
 struct IterationWhileStatement : public Statement{
   CompoundStatement *body = nullptr;
-  virtual StatementType getType() const { return StatementType::IterationWhile; }
-  virtual void dumpInternal() const { }
+  virtual StatementType getStatementType() const { return StatementType::IterationWhile; }
+  virtual void dumpInternal(unsigned indent = 0) const { }
 };
 
 struct JumpReturnStatement : public Statement {
-  virtual StatementType getType() const { return StatementType::JumpReturn; }
-  virtual void dumpInternal() const { }
+  virtual StatementType getStatementType() const { return StatementType::JumpReturn; }
+  virtual void dumpInternal(unsigned indent = 0) const { }
 };
 
 struct AssignmentStatement : public Statement {
   std::string name;
-  virtual StatementType getType() const { return StatementType::Assignment; }
-  virtual void dumpInternal() const { }
+  virtual StatementType getStatementType() const { return StatementType::Assignment; }
+  virtual void dumpInternal(unsigned indent = 0) const { }
 };
 
 struct InitializationStatement : public Statement {
   std::string name;
   Type type;
-  virtual StatementType getType() const { return StatementType::Initialization; }
-  virtual void dumpInternal() const { }
+  virtual StatementType getStatementType() const { return StatementType::Initialization; }
+  virtual void dumpInternal(unsigned indent = 0) const { }
 };
 
 struct ParamDecl {
@@ -146,8 +156,11 @@ struct ParamDecl {
   Type type;
   ParamDecl() = delete;
   ParamDecl(std::string name, Type type): name(name), type(type) { }
-  void dump() const {
-    std::cout << "\n\t(parameter ";
+  void dump(unsigned indent = 0) const {
+    for (unsigned i = 0; i < indent; i++)
+      std::cout << "\t";
+
+    std::cout << "(parameter ";
     std::cout << "name: " << name << ", ";
     std::cout << "type: " << type << " ),";
   }
@@ -169,16 +182,17 @@ struct Defun {
     name(name), params(params),
     returnType(returnType), body(body) {}
 
-  void dump() const {
-    std::cout << "\n";
-    std::cout << "\n(defun " << name;
+  void dump(unsigned indent = 0) const {
+    for (unsigned i = 0; i < indent; i++)
+      std::cout << "\t";
+
+    std::cout << "(defun name: " << name << ", type: " << returnType;
     if (params)
-      params->dump();
+      params->dump(indent + 1);
     if (body) {
-      std::cout<< "\n";
-      body->dump();
+      body->dump(indent + 1);
     }
-    std::cout<< "\n)";
+    std::cout<< ")";
   }
 };
 
