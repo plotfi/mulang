@@ -140,7 +140,11 @@ selection_statement:
     $$ = new SelectionIfStatement();
   };
 
-iteration_statement: WHILE expression compound_statement
+iteration_statement:
+  WHILE expression compound_statement {
+    $$ = new IterationWhileStatement(static_cast<Expression*>($1), static_cast<CompoundStatement*>($2));
+  };
+
 jump_statement:
   RETURN expression ';' {
     debug_print("\n\n>> RETURN <expression>;");

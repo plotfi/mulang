@@ -1,6 +1,6 @@
-#include <vector>
-#include <string>
 #include <iostream>
+#include <string>
+#include <vector>
 
 enum class Type {
   char_mut,
@@ -16,32 +16,50 @@ enum class Type {
   float64_mut
 };
 
-inline
-std::ostream &operator<<(std::ostream &os, Type v) {
-  switch(v) {
-    case Type::char_mut:    os << "char_mut";    break;
-    case Type::uint8_mut:   os << "uint8_mut";   break;
-    case Type::sint8_mut:   os << "sint8_mut";   break;
-    case Type::uint16_mut:  os << "uint16_mut";  break;
-    case Type::sint16_mut:  os << "sint16_mut";  break;
-    case Type::uint32_mut:  os << "uint32_mut";  break;
-    case Type::sint32_mut:  os << "sint32_mut";  break;
-    case Type::uint64_mut:  os << "uint64_mut";  break;
-    case Type::sint64_mut:  os << "sint64_mut";  break;
-    case Type::float32_mut: os << "float32_mut"; break;
-    case Type::float64_mut: os << "float64_mut"; break;
+inline std::ostream &operator<<(std::ostream &os, Type v) {
+  switch (v) {
+  case Type::char_mut:
+    os << "char_mut";
+    break;
+  case Type::uint8_mut:
+    os << "uint8_mut";
+    break;
+  case Type::sint8_mut:
+    os << "sint8_mut";
+    break;
+  case Type::uint16_mut:
+    os << "uint16_mut";
+    break;
+  case Type::sint16_mut:
+    os << "sint16_mut";
+    break;
+  case Type::uint32_mut:
+    os << "uint32_mut";
+    break;
+  case Type::sint32_mut:
+    os << "sint32_mut";
+    break;
+  case Type::uint64_mut:
+    os << "uint64_mut";
+    break;
+  case Type::sint64_mut:
+    os << "sint64_mut";
+    break;
+  case Type::float32_mut:
+    os << "float32_mut";
+    break;
+  case Type::float64_mut:
+    os << "float64_mut";
+    break;
   }
   return os;
 }
 
-template <typename T>
-struct ASTList {
-  std::vector<T*> things;
+template <typename T> struct ASTList {
+  std::vector<T *> things;
 
   ASTList() = delete;
-  ASTList(T *t) {
-    things.push_back(t);
-  }
+  ASTList(T *t) { things.push_back(t); }
 
   ASTList *append(T *t) {
     things.push_back(t);
@@ -58,9 +76,7 @@ struct ASTList {
   }
 };
 
-struct Expression {
-
-};
+struct Expression {};
 
 enum class StatementType {
   Compound,
@@ -71,22 +87,33 @@ enum class StatementType {
   Initialization
 };
 
-
-inline
-std::ostream &operator<<(std::ostream &os, StatementType v) {
-  switch(v) {
-    case StatementType::Compound:       os << "compound";   break;
-    case StatementType::SelectionIf:    os << "if";         break;
-    case StatementType::IterationWhile: os << "while";      break;
-    case StatementType::JumpReturn:     os << "return";     break;
-    case StatementType::Assignment:     os << "assign";     break;
-    case StatementType::Initialization: os << "initialize"; break;
+inline std::ostream &operator<<(std::ostream &os, StatementType v) {
+  switch (v) {
+  case StatementType::Compound:
+    os << "compound";
+    break;
+  case StatementType::SelectionIf:
+    os << "if";
+    break;
+  case StatementType::IterationWhile:
+    os << "while";
+    break;
+  case StatementType::JumpReturn:
+    os << "return";
+    break;
+  case StatementType::Assignment:
+    os << "assign";
+    break;
+  case StatementType::Initialization:
+    os << "initialize";
+    break;
   }
   return os;
 }
 
 struct Statement {
   Expression *expr = nullptr;
+  Statement(Expression *expr = nullptr) : expr(expr) {}
   virtual ~Statement() {}
   virtual bool hasExpression() const { return false; }
   virtual StatementType getStatementType() const = 0;
@@ -104,9 +131,12 @@ struct Statement {
 using StatementList = ASTList<Statement>;
 struct CompoundStatement : public Statement {
   StatementList *statements = nullptr;
-  CompoundStatement() = default;
-  CompoundStatement(StatementList *statements): statements(statements) {}
-  virtual StatementType getStatementType() const { return StatementType::Compound; }
+  CompoundStatement(StatementList *statements = nullptr)
+      : Statement(nullptr), statements(statements) {}
+  virtual ~CompoundStatement() {}
+  virtual StatementType getStatementType() const {
+    return StatementType::Compound;
+  }
   virtual void dumpInternal(unsigned indent = 0) const {
     if (statements) {
       for (auto *statement : statements->things) {
@@ -122,40 +152,52 @@ struct SelectionIfStatement : public Statement {
   CompoundStatement *ifBranch = nullptr;
   CompoundStatement *elseBranch = nullptr;
   virtual bool hasExpression() const override { return true; }
-  virtual StatementType getStatementType() const override { return StatementType::SelectionIf; }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  virtual StatementType getStatementType() const override {
+    return StatementType::SelectionIf;
   }
+  virtual void dumpInternal(unsigned indent = 0) const override {}
 };
 
-struct IterationWhileStatement : public Statement{
+struct IterationWhileStatement : public Statement {
   CompoundStatement *body = nullptr;
-  virtual StatementType getStatementType() const { return StatementType::IterationWhile; }
-  virtual void dumpInternal(unsigned indent = 0) const { }
+  IterationWhileStatement(Expression *expr, CompoundStatement *body)
+      : Statement(expr), body(body) {}
+  virtual ~IterationWhileStatement() {}
+  virtual StatementType getStatementType() const override {
+    return StatementType::IterationWhile;
+  }
+  virtual void dumpInternal(unsigned indent = 0) const override {}
 };
 
 struct JumpReturnStatement : public Statement {
-  virtual StatementType getStatementType() const { return StatementType::JumpReturn; }
-  virtual void dumpInternal(unsigned indent = 0) const { }
+  virtual StatementType getStatementType() const override {
+    return StatementType::JumpReturn;
+  }
+  virtual void dumpInternal(unsigned indent = 0) const override {}
 };
 
 struct AssignmentStatement : public Statement {
   std::string name;
-  virtual StatementType getStatementType() const { return StatementType::Assignment; }
-  virtual void dumpInternal(unsigned indent = 0) const { }
+  virtual StatementType getStatementType() const override {
+    return StatementType::Assignment;
+  }
+  virtual void dumpInternal(unsigned indent = 0) const override {}
 };
 
 struct InitializationStatement : public Statement {
   std::string name;
   Type type;
-  virtual StatementType getStatementType() const { return StatementType::Initialization; }
-  virtual void dumpInternal(unsigned indent = 0) const { }
+  virtual StatementType getStatementType() const override {
+    return StatementType::Initialization;
+  }
+  virtual void dumpInternal(unsigned indent = 0) const override {}
 };
 
 struct ParamDecl {
   std::string name;
   Type type;
   ParamDecl() = delete;
-  ParamDecl(std::string name, Type type): name(name), type(type) { }
+  ParamDecl(std::string name, Type type) : name(name), type(type) {}
   void dump(unsigned indent = 0) const {
     for (unsigned i = 0; i < indent; i++)
       std::cout << "\t";
@@ -177,10 +219,8 @@ struct Defun {
   Defun() = default;
 
   Defun(const char *name, ParamList *params = nullptr,
-        Type returnType = Type::sint32_mut,
-        CompoundStatement *body = nullptr):
-    name(name), params(params),
-    returnType(returnType), body(body) {}
+        Type returnType = Type::sint32_mut, CompoundStatement *body = nullptr)
+      : name(name), params(params), returnType(returnType), body(body) {}
 
   void dump(unsigned indent = 0) const {
     for (unsigned i = 0; i < indent; i++)
@@ -192,7 +232,7 @@ struct Defun {
     if (body) {
       body->dump(indent + 1);
     }
-    std::cout<< ")";
+    std::cout << ")";
   }
 };
 
@@ -203,10 +243,7 @@ struct TranslationUnit {
   DefunList *funcs = nullptr;
 
   TranslationUnit() = delete;
-  TranslationUnit(DefunList *funcs): funcs(funcs) {}
+  TranslationUnit(DefunList *funcs) : funcs(funcs) {}
 
-  void dump() const {
-    funcs->dump();
-  };
+  void dump() const { funcs->dump(); };
 };
-
