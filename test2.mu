@@ -50,6 +50,7 @@ fn main() -> int32 {
 
   var fib: int32 = fibonacci(5);
   _ = printf("fibonacci of 5 is: %d\n", fib);
+  // asdf();
 
   return 0;
 }

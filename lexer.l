@@ -7,6 +7,7 @@ IS      (u|U|l|L)*
 
 %{
 #include <stdio.h>
+#include <string>
 #define YYSTYPE void*
 #include "parser.hpp"
 int check_type();
@@ -144,20 +145,28 @@ void comment() {
 
 
 int g_column = 0;
+int g_line = 0;
+std::string g_lastLine = "";
 
 void count() {
   int i;
 
-  for (i = 0; yytext[i] != '\0'; i++)
-    if (yytext[i] == '\n')
+  for (i = 0; yytext[i] != '\0'; i++) {
+    if (yytext[i] == '\n') {
+      g_lastLine = "";
+      g_line++;
       g_column = 0;
-    else if (yytext[i] == '\t')
+    } else if (yytext[i] == '\t') {
+      g_lastLine += '\t';
       g_column += 8 - (g_column % 8);
-    else
+    } else {
+      g_lastLine += yytext[i];
       g_column++;
+    }
+  }
 
   // Remove the ECHO to skip echoing the input
-  ECHO;
+  // ECHO;
 }
 
 

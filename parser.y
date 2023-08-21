@@ -263,8 +263,15 @@ logical_or_expression
 
 extern char yytext[];
 extern int g_column;
+extern int g_line;
+extern std::string g_lastLine;
 
 void yyerror(const char *s) {
   fflush(stdout);
-  printf("\n%*s\n%*s\n", g_column, "^", g_column, s);
+  // printf("\n%*s\n%*s\n", g_column, "^", g_column, s);
+  std::cerr << "error: parse error at line " << g_line << " column " << g_column << ":\n";
+  std::cerr << g_lastLine << "\n";
+  fprintf(stderr, "\n%*s\n%*s\n", g_column, "^", g_column, s);
+
+
 }
