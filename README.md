@@ -10,8 +10,6 @@ The syntax is as follows:
 
 typealias int = int32;
 
-fn 
-
 // interative fib function. No arrays so no memoization yet.
 fn fibonacci(n: int) -> int {
 
