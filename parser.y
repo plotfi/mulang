@@ -134,15 +134,17 @@ compound_statement:
 
 selection_statement:
   IF expression compound_statement {
-    $$ = new SelectionIfStatement();
+    $$ = new SelectionIfStatement(nullptr, static_cast<CompoundStatement*>($3));
   }
   | IF expression compound_statement ELSE compound_statement {
-    $$ = new SelectionIfStatement();
+    $$ = new SelectionIfStatement(nullptr,
+                                  static_cast<CompoundStatement*>($3),
+                                  static_cast<CompoundStatement*>($5));
   };
 
 iteration_statement:
   WHILE expression compound_statement {
-    $$ = new IterationWhileStatement(static_cast<Expression*>($1), static_cast<CompoundStatement*>($2));
+    $$ = new IterationWhileStatement(nullptr, static_cast<CompoundStatement*>($3));
   };
 
 jump_statement:
@@ -154,11 +156,11 @@ jump_statement:
 
 assignment_statement:
   IDENTIFIER '=' expression ';' {
-    $$ = new AssignmentStatement();
+    $$ = new AssignmentStatement(nullptr, static_cast<yyvalType*>($1)->value);
   };
 init_statement:
   VAR IDENTIFIER ':' type_specifier '=' expression ';' {
-    $$ = new InitializationStatement();
+    $$ = new InitializationStatement(nullptr, static_cast<yyvalType*>($2)->value, Type::sint32_mut);
   };
 
 /*** mu specifiers ***/

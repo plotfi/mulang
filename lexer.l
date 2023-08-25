@@ -181,3 +181,40 @@ int check_type() {
   return IDENTIFIER;
 }
 
+
+/*
+
+Ideas or supporting recursive types:
+
+enum VariantTag {
+...
+};
+
+struct Pair;
+
+struct Variant {
+  VariantTag tag;
+
+  union u {
+    char c,
+    uint32_t ui32;
+    Pair *cons;
+    ...
+  };
+};
+
+Struct Pair {
+  Variant v1;
+  Variant v2;
+};
+
+Pair *make_pair(Variant v1, Variant v2) {
+  Pair p;
+  p.v1 = v1;
+  p.v2 = v2;
+  return p;
+}
+
+List a = make_pair(1, make_pair(2, make_pair(3, nullptr)));
+
+*/

@@ -76,7 +76,123 @@ template <typename T> struct ASTList {
   }
 };
 
-struct Expression {};
+enum class ExpressionType {
+  Unary,
+  Binary,
+  Identifier,
+  Constant,
+  StringLiteral,
+  Call,
+  Parenthesis,
+};
+
+inline std::ostream &operator<<(std::ostream &os, ExpressionType v) {
+  switch (v) {
+  case ExpressionType::Unary:
+    os << "expression_type: unary ";
+    break;
+  case ExpressionType::Binary:
+    os << "expression_type: binary ";
+    break;
+  case ExpressionType::Identifier:
+    os << "expression_type: identifier ";
+    break;
+  case ExpressionType::Constant:
+    os << "expression_type: constant ";
+    break;
+  case ExpressionType::StringLiteral:
+    os << "expression_type: string_literal ";
+    break;
+  case ExpressionType::Call:
+    os << "expression_type: call ";
+    break;
+  case ExpressionType::Parenthesis:
+    os << "expression_type: paren ";
+    break;
+  }
+  return os;
+}
+
+struct Expression {
+  virtual ~Expression() {}
+  virtual ExpressionType getExpressionType() const = 0;
+};
+
+enum class UnaryOp {
+
+};
+
+enum class BinaryOP {
+
+};
+
+struct UnaryExpression : public Expression {
+  UnaryOp op;
+  Expression *innerExpr = nullptr;
+  UnaryExpression(UnaryOp op, Expression *innerExpr)
+      : op(op), innerExpr(innerExpr) {
+    assert(innerExpr &&
+           "inner expression on unary expression must not be null");
+  }
+  virtual ~UnaryExpression() {}
+  virtual ExpressionType getExpressionType() const override {
+    return ExpressionType::Unary;
+  }
+};
+
+struct BinaryExpression : public Expression {
+  BinaryOP op;
+  Expression *leftExpr = nullptr;
+  Expression *rightExpr = nullptr;
+  BinaryExpression(BinaryOP op, Expression *leftExpr, Expression *rightExpr)
+      : op(op), leftExpr(leftExpr), rightExpr(rightExpr) {
+    assert(leftExpr && rightExpr &&
+           "inner expressions on binary expression must not be null");
+  }
+
+  virtual ~BinaryExpression() {}
+  virtual ExpressionType getExpressionType() const override {
+    return ExpressionType::Binary;
+  }
+};
+
+struct IdentifierExpression : public Expression {
+  virtual ~IdentifierExpression() {}
+  virtual ExpressionType getExpressionType() const override {
+    return ExpressionType::Identifier;
+  }
+};
+
+struct ConstantExpression : public Expression {
+  virtual ~ConstantExpression() {}
+  virtual ExpressionType getExpressionType() const override {
+    return ExpressionType::Constant;
+  }
+};
+
+struct StringLiteralExpression : public Expression {
+  virtual ~StringLiteralExpression() {}
+  virtual ExpressionType getExpressionType() const override {
+    return ExpressionType::StringLiteral;
+  }
+};
+
+struct CallExpression : public Expression {
+  virtual ~CallExpression() {}
+  virtual ExpressionType getExpressionType() const override {
+    return ExpressionType::Call;
+  }
+};
+
+struct ParenthesisExpression : public Expression {
+  Expression *innerExpr = nullptr;
+  ParenthesisExpression(Expression *innerExpr = nullptr)
+      : innerExpr(innerExpr) {}
+  virtual ~ParenthesisExpression() {}
+  virtual ExpressionType getExpressionType() const override {
+    return ExpressionType::Parenthesis;
+  }
+};
 
 enum class StatementType {
   Compound,
@@ -151,11 +267,25 @@ struct CompoundStatement : public Statement {
 struct SelectionIfStatement : public Statement {
   CompoundStatement *ifBranch = nullptr;
   CompoundStatement *elseBranch = nullptr;
+
+  SelectionIfStatement() = delete;
+  SelectionIfStatement(Expression *expr, CompoundStatement *ifBranch,
+                       CompoundStatement *elseBranch = nullptr)
+      : Statement(expr), ifBranch(ifBranch), elseBranch(elseBranch) {}
+
   virtual bool hasExpression() const override { return true; }
   virtual StatementType getStatementType() const override {
     return StatementType::SelectionIf;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {}
+  virtual void dumpInternal(unsigned indent = 0) const override {
+    if (ifBranch) {
+      ifBranch->dump(indent + 1);
+    }
+
+    if (elseBranch) {
+      elseBranch->dump(indent + 1);
+    }
+  }
 };
 
 struct IterationWhileStatement : public Statement {
@@ -166,7 +296,11 @@ struct IterationWhileStatement : public Statement {
   virtual StatementType getStatementType() const override {
     return StatementType::IterationWhile;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {}
+  virtual void dumpInternal(unsigned indent = 0) const override {
+    if (body) {
+      body->dump(indent + 1);
+    }
+  }
 };
 
 struct JumpReturnStatement : public Statement {
@@ -178,19 +312,31 @@ struct JumpReturnStatement : public Statement {
 
 struct AssignmentStatement : public Statement {
   std::string name;
+
+  AssignmentStatement(Expression *expr, std::string name)
+      : Statement(expr), name(name) {}
+
   virtual StatementType getStatementType() const override {
     return StatementType::Assignment;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {}
+  virtual void dumpInternal(unsigned indent = 0) const override {
+    std::cout << " name: " << name;
+  }
 };
 
 struct InitializationStatement : public Statement {
   std::string name;
   Type type;
+
+  InitializationStatement(Expression *expr, std::string name, Type type)
+      : Statement(expr), name(name), type(type) {}
+
   virtual StatementType getStatementType() const override {
     return StatementType::Initialization;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {}
+  virtual void dumpInternal(unsigned indent = 0) const override {
+    std::cout << " name: " << name << ", type: " << type;
+  }
 };
 
 struct ParamDecl {

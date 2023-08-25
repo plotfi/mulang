@@ -25,8 +25,12 @@ fn foo(b: int32, z: int32) -> int32 {
 
 fn fibonacci(n: int32) -> int32 {
   
-  if n < 2 {
-    return n;
+  if n < 1 {
+    return 0;
+  } else  {
+    if n == 1 {
+      return 1;
+    }
   }
 
   var prev: int32 = 0;
