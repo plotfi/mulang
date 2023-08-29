@@ -186,10 +186,16 @@ call_expression
   ;
 
 unary_expression
-  : primary_expression
-  | '~' unary_expression
-  | '!' unary_expression
-  | '-' unary_expression
+  : primary_expression { $$ = $1; }
+  | '~' unary_expression {
+    $$ = new UnaryExpression(UnaryOp::invertOp, static_cast<Expression*>($2));
+  }
+  | '!' unary_expression {
+    $$ = new UnaryExpression(UnaryOp::notOp, static_cast<Expression*>($2));
+  }
+  | '-' unary_expression {
+    $$ = new UnaryExpression(UnaryOp::negOp, static_cast<Expression*>($2));
+  }
   ;
 
 expression_list: expression | expression_list ',' expression ;
@@ -200,19 +206,45 @@ expression:
   };
 
 /*** grammar below are expression handling inherited from C: ***/
-c_expression: logical_or_expression ;
+c_expression: logical_or_expression {
+  $$ = $1;
+};
 
 multiplicative_expression
-  : unary_expression
-  | multiplicative_expression '*' unary_expression
-  | multiplicative_expression '/' unary_expression
-  | multiplicative_expression '%' unary_expression
+  : unary_expression {
+    $$ = $1;
+  }
+  | multiplicative_expression '*' unary_expression {
+    $$ = new BinaryExpression(BinaryOp::mulOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
+  | multiplicative_expression '/' unary_expression {
+    $$ = new BinaryExpression(BinaryOp::divOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
+  | multiplicative_expression '%' unary_expression {
+    $$ = new BinaryExpression(BinaryOp::modOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 additive_expression
-  : multiplicative_expression
-  | additive_expression '+' multiplicative_expression
-  | additive_expression '-' multiplicative_expression
+  : multiplicative_expression {
+    $$ = $1;
+  }
+  | additive_expression '+' multiplicative_expression {
+    $$ = new BinaryExpression(BinaryOp::addOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
+  | additive_expression '-' multiplicative_expression {
+    $$ = new BinaryExpression(BinaryOp::subOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 shift_expression

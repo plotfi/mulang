@@ -119,11 +119,30 @@ struct Expression {
 };
 
 enum class UnaryOp {
-
+  invertOp,
+  notOp,
+  negOp
 };
 
-enum class BinaryOP {
-
+enum class BinaryOp {
+  mulOp,
+  divOp,
+  modOp,
+  addOp,
+  subOp,
+  lshOp,
+  rshOp,
+  ltOp,
+  gtOp,
+  leOp,
+  geOp,
+  eqOp,
+  neOp,
+  andOp,
+  xorOp,
+  orOp,
+  andbOp,
+  orbOp
 };
 
 struct UnaryExpression : public Expression {
@@ -141,10 +160,10 @@ struct UnaryExpression : public Expression {
 };
 
 struct BinaryExpression : public Expression {
-  BinaryOP op;
+  BinaryOp op;
   Expression *leftExpr = nullptr;
   Expression *rightExpr = nullptr;
-  BinaryExpression(BinaryOP op, Expression *leftExpr, Expression *rightExpr)
+  BinaryExpression(BinaryOp op, Expression *leftExpr, Expression *rightExpr)
       : op(op), leftExpr(leftExpr), rightExpr(rightExpr) {
     assert(leftExpr && rightExpr &&
            "inner expressions on binary expression must not be null");
