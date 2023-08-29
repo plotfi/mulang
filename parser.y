@@ -248,48 +248,116 @@ additive_expression
   ;
 
 shift_expression
-  : additive_expression
-  | shift_expression LEFT_OP additive_expression
-  | shift_expression RIGHT_OP additive_expression
+  : additive_expression {
+    $$ = $1;
+  }
+  | shift_expression LEFT_OP additive_expression {
+    $$ = new BinaryExpression(BinaryOp::lshOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
+  | shift_expression RIGHT_OP additive_expression {
+    $$ = new BinaryExpression(BinaryOp::rshOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 relational_expression
-  : shift_expression
-  | relational_expression '<' shift_expression
-  | relational_expression '>' shift_expression
-  | relational_expression LE_OP shift_expression
-  | relational_expression GE_OP shift_expression
+  : shift_expression {
+    $$ = $1;
+  }
+  | relational_expression '<' shift_expression {
+    $$ = new BinaryExpression(BinaryOp::ltOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
+  | relational_expression '>' shift_expression {
+    $$ = new BinaryExpression(BinaryOp::gtOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
+  | relational_expression LE_OP shift_expression {
+    $$ = new BinaryExpression(BinaryOp::leOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
+  | relational_expression GE_OP shift_expression {
+    $$ = new BinaryExpression(BinaryOp::geOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 equality_expression
-  : relational_expression
-  | equality_expression EQ_OP relational_expression
-  | equality_expression NE_OP relational_expression
+  : relational_expression {
+    $$ = $1;
+  }
+  | equality_expression EQ_OP relational_expression {
+    $$ = new BinaryExpression(BinaryOp::eqOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
+  | equality_expression NE_OP relational_expression {
+    $$ = new BinaryExpression(BinaryOp::neOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 and_expression
-  : equality_expression
-  | and_expression '&' equality_expression
+  : equality_expression {
+    $$ = $1;
+  }
+  | and_expression '&' equality_expression {
+    $$ = new BinaryExpression(BinaryOp::andOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 exclusive_or_expression
-  : and_expression
-  | exclusive_or_expression '^' and_expression
+  : and_expression {
+    $$ = $1;
+  }
+  | exclusive_or_expression '^' and_expression {
+    $$ = new BinaryExpression(BinaryOp::xorOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 inclusive_or_expression
-  : exclusive_or_expression
-  | inclusive_or_expression '|' exclusive_or_expression
+  : exclusive_or_expression {
+    $$ = $1;
+  }
+  | inclusive_or_expression '|' exclusive_or_expression {
+    $$ = new BinaryExpression(BinaryOp::orOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 logical_and_expression
-  : inclusive_or_expression
-  | logical_and_expression AND_OP inclusive_or_expression
+  : inclusive_or_expression {
+    $$ = $1;
+  }
+  | logical_and_expression AND_OP inclusive_or_expression {
+    $$ = new BinaryExpression(BinaryOp::andbOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 logical_or_expression
-  : logical_and_expression
-  | logical_or_expression OR_OP logical_and_expression
+  : logical_and_expression {
+    $$ = $1;
+  }
+  | logical_or_expression OR_OP logical_and_expression {
+    $$ = new BinaryExpression(BinaryOp::orbOp,
+                              static_cast<Expression*>($1),
+                              static_cast<Expression*>($3));
+  }
   ;
 
 %%
