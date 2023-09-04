@@ -12,7 +12,13 @@ unsigned astNodeDestroyCount;
 
 
 void dumpASTNode(const ASTNode *node) {
+  // std::cout << "ASTNode dump with ID " << node->id << ": ";
   node->dump();
+}
+
+void dumpASTNodeType(const ASTNode *node) {
+  std::cout << "ASTNode dump with ID " << node->id << ": ";
+  node->dumpASTNodeType();
 }
 
 
@@ -42,7 +48,7 @@ int main(int argc, char **argv) {
 
   std::cout << "Iterate over all tracked AST Nodes:\n\n";
 
-  std::cout << "Dump Tracked:\n";
+  std::cout << "\n\nDump Tracked:\n";
   ASTNodeTracker::get()->dumpTracked();
 
 

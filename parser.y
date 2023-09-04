@@ -149,18 +149,19 @@ iteration_statement:
 
 jump_statement:
   RETURN expression ';' {
-    debug_print("\n\n>> RETURN <expression>;");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
-    $$ = new JumpReturnStatement();
+    $$ = new JumpReturnStatement(static_cast<Expression*>($2));
   } ;
 
 assignment_statement:
   IDENTIFIER '=' expression ';' {
-    $$ = new AssignmentStatement(nullptr, static_cast<yyvalType*>($1)->value);
+    $$ = new AssignmentStatement(static_cast<Expression*>($3),
+                                 static_cast<yyvalType*>($1)->value);
   };
 init_statement:
   VAR IDENTIFIER ':' type_specifier '=' expression ';' {
-    $$ = new InitializationStatement(nullptr, static_cast<yyvalType*>($2)->value, Type::sint32_mut);
+    $$ = new InitializationStatement(static_cast<Expression*>($6),
+                                     static_cast<yyvalType*>($2)->value,
+                                     Type::sint32_mut);
   };
 
 /*** mu specifiers ***/
@@ -170,18 +171,29 @@ type_specifier:  CHAR | UINT8 | USHORT | UINT  | ULONG |
 
 /*** mu expressions ***/
 primary_expression
-  : IDENTIFIER
-  | CONSTANT
-  | STRING_LITERAL
-  | '(' expression ')'
-  | call_expression
+  : IDENTIFIER {
+    $$ = new IdentifierExpression(static_cast<yyvalType*>($1)->value);
+  }
+  | CONSTANT {
+    $$ = new ConstantExpression();
+  }
+  | STRING_LITERAL {
+    $$ = nullptr;
+  }
+  | '(' expression ')' {
+    $$ = new ParenthesisExpression(static_cast<Expression*>($2));
+  }
+  | call_expression {
+    $$ = $1;
+  }
   ;
 
 call_expression
-  : IDENTIFIER '(' expression_list ')'
+  : IDENTIFIER '(' expression_list ')'  {
+    $$ = new CallExpression();
+  }
   | IDENTIFIER '(' ')' {
-    debug_print("\n\n>> call_expression!!");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = new CallExpression();
   }
   ;
 
@@ -198,11 +210,17 @@ unary_expression
   }
   ;
 
-expression_list: expression | expression_list ',' expression ;
+expression_list:
+  expression {
+    $$ = nullptr;
+  }
+  | expression_list ',' expression {
+    $$ = nullptr;
+  };
+
 expression:
   c_expression {
-    debug_print("\n\n>> expression -> c_expression");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
+    $$ = $1;
   };
 
 /*** grammar below are expression handling inherited from C: ***/
