@@ -21,6 +21,9 @@ void dumpASTNodeType(const ASTNode *node) {
   node->dumpASTNodeType();
 }
 
+unsigned getASTNodeID(const ASTNode *node) {
+  return node->id;
+}
 
 #if YYDEBUG
 extern int yydebug;
@@ -48,14 +51,7 @@ int main(int argc, char **argv) {
 
   std::cout << "Iterate over all tracked AST Nodes:\n\n";
 
-  std::cout << "\n\nDump Tracked:\n";
-  ASTNodeTracker::get()->dumpTracked();
 
-
-  // ASTNodeTracker::get()->dump();
   delete topnode;
-
-  std::cout << "\n\nDumping Untracked Nodes:\n\n";
-  ASTNodeTracker::get()->dumpUntracked();
-
+  ASTNodeTracker::destroy();
 }

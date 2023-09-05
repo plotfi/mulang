@@ -7,11 +7,11 @@ struct ASTNode;
 
 extern void dumpASTNode(const ASTNode *node);
 extern void dumpASTNodeType(const ASTNode *node);
+extern unsigned getASTNodeID(const ASTNode *node);
 
 struct ASTNodeTracker {
 private:
   std::vector<const ASTNode*> tracked;
-  std::vector<const ASTNode*> untracked;
   ASTNodeTracker() { }
 
   static ASTNodeTracker *instance;
@@ -22,12 +22,33 @@ public:
     return instance;
   }
 
+  static void destroy() {
+    if (instance && instance->hasTrackedNodes()) {
+      std::cout << "Dumping Tracked Nodes:\n";
+      for (unsigned i = 0; i < instance->tracked.size(); i++) {
+        if (instance->tracked[i]) {
+          std::cout << "[" << i << "] = " << instance->tracked[i] << " ";
+          dumpASTNodeType(instance->tracked[i]);
+        }
+      }
+    }
+    assert(instance && !instance->hasTrackedNodes() && "Expected all nodes to be untracked by dtors");
+    delete instance;
+    instance = nullptr;
+  }
+
   void track(const ASTNode *node) {
     tracked.push_back(node);
   }
 
   void untrack(const ASTNode *node) {
-    untracked.push_back(node);
+    const ASTNode *trackedNode = tracked[getASTNodeID(node)];
+    assert(trackedNode == node && "tracked node mismatch!");
+    tracked[getASTNodeID(node)] = nullptr;
+  }
+
+  [[nodiscard]] auto hasTrackedNodes() const -> bool {
+    return !std::all_of(tracked.begin(), tracked.end(), [](const ASTNode *node) { return nullptr == node; });
   }
 
   size_t size() const {
@@ -37,19 +58,6 @@ public:
   virtual void dump(unsigned indent = 0) const {
     for (auto *node : tracked) {
       dumpASTNode(node);
-    }
-  }
-
-  virtual void dumpTracked() const {
-    for (const auto *node : tracked) {
-      dumpASTNodeType(node);
-    }
-  }
-
-  virtual void dumpUntracked() const {
-    for (auto *node : untracked) {
-      std::cout << "Untracked Node: ";
-      dumpASTNodeType(node);
     }
   }
 };
@@ -67,9 +75,7 @@ struct ASTNode {
     tracker->track(this);
   }
   virtual ~ASTNode() {
-
-    std::cout << "ASTNode delete with ID " << id << "\n";
-    // tracker->untrack(this);
+    tracker->untrack(this);
   }
   virtual void dump(unsigned indent = 0) const = 0;
   virtual void dumpASTNodeType() const = 0;
