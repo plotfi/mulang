@@ -3,22 +3,25 @@
 #include <string>
 #include <vector>
 
+// These are kinda gross, move them to another Source of Header:
 struct ASTNode;
-
 extern void dumpASTNode(const ASTNode *node);
 extern void dumpASTNodeType(const ASTNode *node);
 extern unsigned getASTNodeID(const ASTNode *node);
+extern unsigned astNodeCreateCount;
+extern unsigned astNodeDestroyCount;
 
-struct ASTNodeTracker {
-private:
-  std::vector<const ASTNode*> tracked;
-  ASTNodeTracker() { }
+#define fn [[nodiscard]] auto
 
+class ASTNodeTracker {
+  std::vector<const ASTNode *> tracked;
+  ASTNodeTracker() {}
   static ASTNodeTracker *instance;
 
 public:
   static ASTNodeTracker *get() {
-    if (!instance) instance = new ASTNodeTracker();
+    if (!instance)
+      instance = new ASTNodeTracker();
     return instance;
   }
 
@@ -32,14 +35,13 @@ public:
         }
       }
     }
-    assert(instance && !instance->hasTrackedNodes() && "Expected all nodes to be untracked by dtors");
+    assert(instance && !instance->hasTrackedNodes() &&
+           "Expected all nodes to be untracked by dtors");
     delete instance;
     instance = nullptr;
   }
 
-  void track(const ASTNode *node) {
-    tracked.push_back(node);
-  }
+  void track(const ASTNode *node) { tracked.push_back(node); }
 
   void untrack(const ASTNode *node) {
     const ASTNode *trackedNode = tracked[getASTNodeID(node)];
@@ -47,38 +49,49 @@ public:
     tracked[getASTNodeID(node)] = nullptr;
   }
 
-  [[nodiscard]] auto hasTrackedNodes() const -> bool {
-    return !std::all_of(tracked.begin(), tracked.end(), [](const ASTNode *node) { return nullptr == node; });
+  fn hasTrackedNodes() const -> bool {
+    return !std::all_of(tracked.begin(), tracked.end(),
+                        [](const ASTNode *node) { return nullptr == node; });
   }
 
-  size_t size() const {
-    return tracked.size();
-  }
+  fn size() const -> size_t { return tracked.size(); }
 
   virtual void dump(unsigned indent = 0) const {
     for (auto *node : tracked) {
       dumpASTNode(node);
     }
   }
+
+  virtual void dumpNodeByID(unsigned id) const {
+    dumpASTNode(tracked[id]);
+  }
 };
 
-extern unsigned astNodeCreateCount;
-extern unsigned astNodeDestroyCount;
-
 struct ASTNode {
-  ASTNodeTracker *tracker = nullptr;
-  unsigned id = 0;
   ASTNode() {
     tracker = ASTNodeTracker::get();
     id = tracker->size();
+    std::cout << "Previous Node: ";
+    if (id) {
+      tracker->dumpNodeByID(id-1);
+    }
+    std::cout << "\n";
+    assert(id != 26 && "blow up ASTNode for debug");
+    // assert(id != 102 && "blow up ASTNode for debug");
     std::cout << "create base ASTNode with id: " << id << " !!!\n";
     tracker->track(this);
   }
   virtual ~ASTNode() {
+    std::cout << "Untracking ID: " << getID() << "\n";
     tracker->untrack(this);
   }
   virtual void dump(unsigned indent = 0) const = 0;
   virtual void dumpASTNodeType() const = 0;
+  fn getID() const -> unsigned { return id; }
+
+private:
+  ASTNodeTracker *tracker = nullptr;
+  unsigned id = 0;
 };
 
 enum class Type {
@@ -147,7 +160,7 @@ template <typename T, unsigned newlines = 0> struct ASTList : public ASTNode {
     }
   }
 
-  ASTList *append(T *t) {
+  fn append(T *t) -> ASTList* {
     things.push_back(t);
     return this;
   }
@@ -162,7 +175,6 @@ template <typename T, unsigned newlines = 0> struct ASTList : public ASTNode {
         std::cout << "\n";
     }
   }
-
 
   virtual void dumpASTNodeType() const override { std::cout << "ASTList\n"; }
 };
@@ -205,7 +217,7 @@ inline std::ostream &operator<<(std::ostream &os, ExpressionType v) {
 }
 
 struct Expression : public ASTNode {
-  virtual ~Expression() { }
+  virtual ~Expression() {}
   virtual ExpressionType getExpressionType() const = 0;
   virtual void dumpInternal(unsigned indent = 0) const = 0;
   virtual void dump(unsigned indent = 0) const override {
@@ -218,17 +230,19 @@ struct Expression : public ASTNode {
   }
 };
 
-enum class UnaryOp {
-  invertOp,
-  notOp,
-  negOp
-};
+enum class UnaryOp { invertOp, notOp, negOp };
 
 inline std::ostream &operator<<(std::ostream &os, UnaryOp v) {
   switch (v) {
-  case UnaryOp::invertOp:  os << "op: invert "; break;
-  case UnaryOp::notOp:  os << "op: not "; break;
-  case UnaryOp::negOp:  os << "op: neg "; break;
+  case UnaryOp::invertOp:
+    os << "op: invert ";
+    break;
+  case UnaryOp::notOp:
+    os << "op: not ";
+    break;
+  case UnaryOp::negOp:
+    os << "op: neg ";
+    break;
   }
   return os;
 }
@@ -256,24 +270,60 @@ enum class BinaryOp {
 
 inline std::ostream &operator<<(std::ostream &os, BinaryOp v) {
   switch (v) {
-  case BinaryOp::mulOp:  os << "op: mul "; break;
-  case BinaryOp::divOp:  os << "op: div "; break;
-  case BinaryOp::modOp:  os << "op: mod "; break;
-  case BinaryOp::addOp:  os << "op: add "; break;
-  case BinaryOp::subOp:  os << "op: sub "; break;
-  case BinaryOp::lshOp:  os << "op: lsh "; break;
-  case BinaryOp::rshOp:  os << "op: rsh "; break;
-  case BinaryOp::ltOp:   os << "op: lt "; break;
-  case BinaryOp::gtOp:   os << "op: gt "; break;
-  case BinaryOp::leOp:   os << "op: le "; break;
-  case BinaryOp::geOp:   os << "op: ge "; break;
-  case BinaryOp::eqOp:   os << "op: eq "; break;
-  case BinaryOp::neOp:   os << "op: ne "; break;
-  case BinaryOp::andOp:  os << "op: and "; break;
-  case BinaryOp::xorOp:  os << "op: xor "; break;
-  case BinaryOp::orOp:   os << "op: or "; break;
-  case BinaryOp::andbOp: os << "op: andb "; break;
-  case BinaryOp::orbOp:  os << "op: orb "; break;
+  case BinaryOp::mulOp:
+    os << "op: mul ";
+    break;
+  case BinaryOp::divOp:
+    os << "op: div ";
+    break;
+  case BinaryOp::modOp:
+    os << "op: mod ";
+    break;
+  case BinaryOp::addOp:
+    os << "op: add ";
+    break;
+  case BinaryOp::subOp:
+    os << "op: sub ";
+    break;
+  case BinaryOp::lshOp:
+    os << "op: lsh ";
+    break;
+  case BinaryOp::rshOp:
+    os << "op: rsh ";
+    break;
+  case BinaryOp::ltOp:
+    os << "op: lt ";
+    break;
+  case BinaryOp::gtOp:
+    os << "op: gt ";
+    break;
+  case BinaryOp::leOp:
+    os << "op: le ";
+    break;
+  case BinaryOp::geOp:
+    os << "op: ge ";
+    break;
+  case BinaryOp::eqOp:
+    os << "op: eq ";
+    break;
+  case BinaryOp::neOp:
+    os << "op: ne ";
+    break;
+  case BinaryOp::andOp:
+    os << "op: and ";
+    break;
+  case BinaryOp::xorOp:
+    os << "op: xor ";
+    break;
+  case BinaryOp::orOp:
+    os << "op: or ";
+    break;
+  case BinaryOp::andbOp:
+    os << "op: andb ";
+    break;
+  case BinaryOp::orbOp:
+    os << "op: orb ";
+    break;
   }
   return os;
 }
@@ -307,6 +357,14 @@ struct BinaryExpression : public Expression {
   Expression *rightExpr = nullptr;
   BinaryExpression(BinaryOp op, Expression *leftExpr, Expression *rightExpr)
       : op(op), leftExpr(leftExpr), rightExpr(rightExpr) {
+
+    std::cout << "Bianry Expr:" << op << "\n";
+    std::cout << "root ID: " << this->getID() << "\n";
+    std::cout << "left ID: " << leftExpr->getID() << "\n";
+    std::cout << "right ID: " << rightExpr->getID() << "\n";
+    leftExpr->dump();
+    rightExpr->dump();
+    std::cout << "\n";
     assert(leftExpr && rightExpr &&
            "inner expressions on binary expression must not be null");
   }
@@ -332,7 +390,7 @@ struct BinaryExpression : public Expression {
 struct IdentifierExpression : public Expression {
   std::string name;
   IdentifierExpression() = delete;
-  IdentifierExpression(std::string name): name(name) {}
+  IdentifierExpression(std::string name) : name(name) {}
   virtual ~IdentifierExpression() {}
   virtual ExpressionType getExpressionType() const override {
     return ExpressionType::Identifier;
@@ -359,7 +417,9 @@ struct StringLiteralExpression : public Expression {
   virtual ExpressionType getExpressionType() const override {
     return ExpressionType::StringLiteral;
   }
-  virtual void dumpASTNodeType() const override { std::cout << "StirngLitExpr\n"; }
+  virtual void dumpASTNodeType() const override {
+    std::cout << "StirngLitExpr\n";
+  }
 };
 
 struct CallExpression : public Expression {
@@ -471,7 +531,9 @@ struct CompoundStatement : public Statement {
       }
     }
   }
-  virtual void dumpASTNodeType() const override { std::cout << "CompoundStatement\n"; }
+  virtual void dumpASTNodeType() const override {
+    std::cout << "CompoundStatement\n";
+  }
 };
 
 struct SelectionIfStatement : public Statement {
@@ -504,7 +566,9 @@ struct SelectionIfStatement : public Statement {
       elseBranch->dump(indent + 1);
     }
   }
-  virtual void dumpASTNodeType() const override { std::cout << "SelectIfStatement\n"; }
+  virtual void dumpASTNodeType() const override {
+    std::cout << "SelectIfStatement\n";
+  }
 };
 
 struct IterationWhileStatement : public Statement {
@@ -524,18 +588,22 @@ struct IterationWhileStatement : public Statement {
       body->dump(indent + 1);
     }
   }
-  virtual void dumpASTNodeType() const override { std::cout << "IterWhileStatement\n"; }
+  virtual void dumpASTNodeType() const override {
+    std::cout << "IterWhileStatement\n";
+  }
 };
 
 struct JumpReturnStatement : public Statement {
   JumpReturnStatement() = delete;
-  JumpReturnStatement(Expression *expr): Statement(expr) { }
+  JumpReturnStatement(Expression *expr) : Statement(expr) {}
 
   virtual StatementType getStatementType() const override {
     return StatementType::JumpReturn;
   }
   virtual void dumpInternal(unsigned indent = 0) const override {}
-  virtual void dumpASTNodeType() const override { std::cout << "JumpRetStatement\n"; }
+  virtual void dumpASTNodeType() const override {
+    std::cout << "JumpRetStatement\n";
+  }
 };
 
 struct AssignmentStatement : public Statement {
@@ -550,7 +618,9 @@ struct AssignmentStatement : public Statement {
   virtual void dumpInternal(unsigned indent = 0) const override {
     std::cout << " name: " << name;
   }
-  virtual void dumpASTNodeType() const override { std::cout << "AssignmentStatement\n"; }
+  virtual void dumpASTNodeType() const override {
+    std::cout << "AssignmentStatement\n";
+  }
 };
 
 struct InitializationStatement : public Statement {
@@ -567,7 +637,9 @@ struct InitializationStatement : public Statement {
   virtual void dumpInternal(unsigned indent = 0) const override {
     std::cout << " name: " << name << ", type: " << type;
   }
-  virtual void dumpASTNodeType() const override { std::cout << "InitStatement\n"; }
+  virtual void dumpASTNodeType() const override {
+    std::cout << "InitStatement\n";
+  }
 };
 
 struct ParamDecl : public ASTNode {
@@ -576,7 +648,7 @@ struct ParamDecl : public ASTNode {
 
   ParamDecl() = delete;
   ParamDecl(std::string name, Type type) : name(name), type(type) {}
-  virtual ~ParamDecl() {};
+  virtual ~ParamDecl(){};
 
   virtual void dump(unsigned indent = 0) const override {
     for (unsigned i = 0; i < indent; i++)
@@ -634,10 +706,10 @@ struct TranslationUnit : public ASTNode {
 
   TranslationUnit() = delete;
   TranslationUnit(DefunList *funcs) : funcs(funcs) {}
-  virtual ~TranslationUnit() {
-    delete funcs;
-  }
+  virtual ~TranslationUnit() { delete funcs; }
 
   virtual void dump(unsigned indent = 0) const override { funcs->dump(); };
-  virtual void dumpASTNodeType() const override { std::cout << "TranslationUnit\n"; }
+  virtual void dumpASTNodeType() const override {
+    std::cout << "TranslationUnit\n";
+  }
 };

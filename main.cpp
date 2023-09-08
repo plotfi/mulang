@@ -1,15 +1,15 @@
+#include <ast.h>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <ast.h>
 
 int yyparse();
 extern FILE *yyin;
 extern TranslationUnit *topnode;
-ASTNodeTracker* ASTNodeTracker::instance = nullptr;;
+ASTNodeTracker *ASTNodeTracker::instance = nullptr;
+;
 unsigned astNodeCreateCount;
 unsigned astNodeDestroyCount;
-
 
 void dumpASTNode(const ASTNode *node) {
   // std::cout << "ASTNode dump with ID " << node->id << ": ";
@@ -17,13 +17,11 @@ void dumpASTNode(const ASTNode *node) {
 }
 
 void dumpASTNodeType(const ASTNode *node) {
-  std::cout << "ASTNode dump with ID " << node->id << ": ";
+  std::cout << "ASTNode dump with ID " << node->getID() << ": ";
   node->dumpASTNodeType();
 }
 
-unsigned getASTNodeID(const ASTNode *node) {
-  return node->id;
-}
+unsigned getASTNodeID(const ASTNode *node) { return node->getID(); }
 
 #if YYDEBUG
 extern int yydebug;
@@ -43,14 +41,16 @@ int main(int argc, char **argv) {
   yyparse();
   fclose(yyin);
 
-  std::cout << "TOPNODE NAME: " << "main" << "\n";
+  std::cout << "TOPNODE NAME: "
+            << "main"
+            << "\n";
   topnode->dump();
   std::cout << "\n\n";
 
-  std::cout << "Tracked AST Node Count: " << ASTNodeTracker::get()->size() << "\n";
+  std::cout << "Tracked AST Node Count: " << ASTNodeTracker::get()->size()
+            << "\n";
 
   std::cout << "Iterate over all tracked AST Nodes:\n\n";
-
 
   delete topnode;
   ASTNodeTracker::destroy();

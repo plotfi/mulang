@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include "ast.h"
+#include "yyvaltype.h"
 
 #if 0
 #define debug_print(...) printf(__VA_ARGS__)
@@ -11,168 +12,175 @@
 
 int yylex();
 void yyerror(const char *s);
-TranslationUnit *topnode;
-
-typedef struct yyvalType {
-  int linenum;
-  char *value;
-  char *tokText;
-} yyvalType;
-
-yyvalType *makeyyvalType(int linenum, char *value, char *token);
 
 #define YYSTYPE void*
+
+TranslationUnit *topnode;
 %}
 
 %token VAR FUNCTION
-%token IDENTIFIER CONSTANT STRING_LITERAL
-
 %token PTR_OP
-
 %token LEFT_OP RIGHT_OP
 %token AND_OP OR_OP
 %token LE_OP GE_OP EQ_OP NE_OP
-
+%token IDENTIFIER CONSTANT STRING_LITERAL
 %token TYPE_NAME
-%token CHAR SHORT INT LONG FLOAT DOUBLE
-%token USHORT UINT ULONG
-%token INT8 UINT8
-
+%token CHAR SHORT INT LONG FLOAT DOUBLE USHORT UINT ULONG INT8 UINT8
 %token IF ELSE WHILE RETURN
 
 %start translation_unit
 %%
 
-/*** syntax ripped out of C and into mu above ***/
-
 /*** mu top-level constructs ***/
-translation_unit: toplevel_declaration_list {
-  topnode = new TranslationUnit(static_cast<DefunList*>($1));
-};
+translation_unit
+  : toplevel_declaration_list {
+    topnode = new TranslationUnit(static_cast<DefunList *>($1));
+  }
+  ;
 
-toplevel_declaration_list:
-  toplevel_declaration {
-    $$ = new DefunList(static_cast<Defun*>($1));
+toplevel_declaration_list
+  : toplevel_declaration {
+    $$ = new DefunList(static_cast<Defun *>($1));
   }
   | toplevel_declaration_list toplevel_declaration {
-    $$ = static_cast<DefunList*>($1)->append(static_cast<Defun*>($2));
-  };
+    $$ = static_cast<DefunList *>($1)->append(static_cast<Defun *>($2));
+  }
+  ;
 
-toplevel_declaration: mu_function_definition { $$ = $1; };
+toplevel_declaration
+  : mu_function_definition {
+    $$ = $1;
+  }
+  ;
 
 mu_function_definition
-  : FUNCTION IDENTIFIER '(' parameter_list ')' PTR_OP type_specifier compound_statement {
-    $$ = new Defun(static_cast<yyvalType*>($2)->value, static_cast<ParamList*>($4),
-                   Type::sint32_mut, static_cast<CompoundStatement*>($8));
+  : FUNCTION IDENTIFIER '(' parameter_list ')' PTR_OP
+      type_specifier compound_statement {
+    $$ = new Defun(static_cast<yyvalType *>($2)->value,
+                   static_cast<ParamList *>($4), Type::sint32_mut,
+                   static_cast<CompoundStatement *>($8));
   }
   | FUNCTION IDENTIFIER '(' ')' PTR_OP  type_specifier compound_statement {
-    $$ = new Defun(static_cast<yyvalType*>($2)->value, nullptr,
-                   Type::sint32_mut, static_cast<CompoundStatement*>($7));
-  };
+    $$ = new Defun(static_cast<yyvalType *>($2)->value, nullptr,
+                   Type::sint32_mut, static_cast<CompoundStatement *>($7));
+  }
+  ;
 
-parameter_list:
-  parameter_declaration {
-    $$ = new ParamList(static_cast<ParamDecl*>($1));
+parameter_list
+  : parameter_declaration {
+    $$ = new ParamList(static_cast<ParamDecl *>($1));
   }
   | parameter_list ',' parameter_declaration {
-    $$ = static_cast<ParamList*>($1)->append(static_cast<ParamDecl*>($3));
-  };
+    $$ = static_cast<ParamList *>($1)->append(static_cast<ParamDecl *>($3));
+  }
+  ;
 
-parameter_declaration:
-  IDENTIFIER ':' type_specifier {
-    $$ = new ParamDecl(static_cast<yyvalType*>($1)->value, Type::sint32_mut);
-  };
+parameter_declaration
+  : IDENTIFIER ':' type_specifier {
+    $$ = new ParamDecl(static_cast<yyvalType *>($1)->value, Type::sint32_mut);
+  }
+  ;
 
 /*** mu statements ***/
-statement_list:
-  statement {
-    $$ = new StatementList(static_cast<Statement*>($1));
+statement_list
+  : statement {
+    $$ = new StatementList(static_cast<Statement *>($1));
   }
   | statement_list statement {
-    $$ = static_cast<StatementList*>($1)->append(static_cast<Statement*>($2));
-  };
+    $$ = static_cast<StatementList *>($1)->append(static_cast<Statement *>($2));
+  }
+  ;
 
-statement:
-  compound_statement {
-    debug_print("\n\n>> statement -> compound_statement");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
+statement
+  : compound_statement {
     $$ = $1;
   }
   | selection_statement {
-    debug_print("\n\n>> statement -> selection_statement");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
     $$ = $1;
   }
   | iteration_statement {
-    debug_print("\n\n>> statement -> iteration_statement");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
     $$ = $1;
   }
   | jump_statement {
-    debug_print("\n\n>> statement -> jump_statement");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
     $$ = $1;
   }
   | assignment_statement {
-    debug_print("\n\n>> statement -> assignment_statement");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
     $$ = $1;
   }
   | init_statement {
-    debug_print("\n\n>> statement -> init_statement");
-    debug_print("...  dolla: %s", static_cast<char*>($1));
     $$ = $1;
-  };
+  }
+  ;
 
-compound_statement:
-  '{' '}'  {
+compound_statement
+  : '{' '}'  {
     $$ = new CompoundStatement();
   }
   | '{' statement_list '}' {
-    $$ = new CompoundStatement(static_cast<StatementList*>($2));
-  };
+    $$ = new CompoundStatement(static_cast<StatementList *>($2));
+  }
+  ;
 
-selection_statement:
-  IF expression compound_statement {
-    $$ = new SelectionIfStatement(nullptr, static_cast<CompoundStatement*>($3));
+selection_statement
+  : IF expression compound_statement {
+    $$ = new SelectionIfStatement(static_cast<Expression *>($2),
+                                  static_cast<CompoundStatement *>($3));
   }
   | IF expression compound_statement ELSE compound_statement {
-    $$ = new SelectionIfStatement(nullptr,
-                                  static_cast<CompoundStatement*>($3),
-                                  static_cast<CompoundStatement*>($5));
-  };
+    $$ = new SelectionIfStatement(static_cast<Expression *>($2),
+                                  static_cast<CompoundStatement *>($3),
+                                  static_cast<CompoundStatement *>($5));
+  }
+  ;
 
-iteration_statement:
-  WHILE expression compound_statement {
-    $$ = new IterationWhileStatement(nullptr, static_cast<CompoundStatement*>($3));
-  };
+iteration_statement
+  : WHILE expression compound_statement {
+    $$ = new IterationWhileStatement(static_cast<Expression *>($2),
+                                     static_cast<CompoundStatement *>($3));
+  }
+  ;
 
-jump_statement:
-  RETURN expression ';' {
+jump_statement
+  : RETURN expression ';' {
     $$ = new JumpReturnStatement(static_cast<Expression*>($2));
-  } ;
+  }
+  ;
 
-assignment_statement:
-  IDENTIFIER '=' expression ';' {
-    $$ = new AssignmentStatement(static_cast<Expression*>($3),
-                                 static_cast<yyvalType*>($1)->value);
-  };
-init_statement:
-  VAR IDENTIFIER ':' type_specifier '=' expression ';' {
-    $$ = new InitializationStatement(static_cast<Expression*>($6),
-                                     static_cast<yyvalType*>($2)->value,
+assignment_statement
+  : IDENTIFIER '=' expression ';' {
+    $$ = new AssignmentStatement(static_cast<Expression *>($3),
+                                 static_cast<yyvalType *>($1)->value);
+  }
+  ;
+
+init_statement
+  : VAR IDENTIFIER ':' type_specifier '=' expression ';' {
+    $$ = new InitializationStatement(static_cast<Expression *>($6),
+                                     static_cast<yyvalType *>($2)->value,
                                      Type::sint32_mut);
-  };
+  }
+  ;
 
 /*** mu specifiers ***/
-type_specifier:  CHAR | UINT8 | USHORT | UINT  | ULONG |
-                         INT8 |  SHORT |  INT  |  LONG |
-                        FLOAT | DOUBLE | TYPE_NAME ;
+type_specifier
+  : CHAR
+  | UINT8
+  | USHORT
+  | UINT
+  | ULONG
+  | INT8
+  | SHORT
+  | INT
+  | LONG
+  | FLOAT
+  | DOUBLE
+  | TYPE_NAME
+  ;
 
 /*** mu expressions ***/
 primary_expression
   : IDENTIFIER {
-    $$ = new IdentifierExpression(static_cast<yyvalType*>($1)->value);
+    $$ = new IdentifierExpression(static_cast<yyvalType *>($1)->value);
   }
   | CONSTANT {
     $$ = new ConstantExpression();
@@ -181,7 +189,7 @@ primary_expression
     $$ = nullptr;
   }
   | '(' expression ')' {
-    $$ = new ParenthesisExpression(static_cast<Expression*>($2));
+    $$ = new ParenthesisExpression(static_cast<Expression *>($2));
   }
   | call_expression {
     $$ = $1;
@@ -198,7 +206,9 @@ call_expression
   ;
 
 unary_expression
-  : primary_expression { $$ = $1; }
+  : primary_expression {
+    $$ = $1;
+  }
   | '~' unary_expression {
     $$ = new UnaryExpression(UnaryOp::invertOp, static_cast<Expression*>($2));
   }
@@ -210,42 +220,43 @@ unary_expression
   }
   ;
 
-expression_list:
-  expression {
+expression_list
+  : expression {
     $$ = nullptr;
   }
   | expression_list ',' expression {
     $$ = nullptr;
-  };
+  }
+  ;
 
-expression:
-  c_expression {
+expression
+  : c_expression {
     $$ = $1;
-  };
+  }
+  ;
 
 /*** grammar below are expression handling inherited from C: ***/
-c_expression: logical_or_expression {
-  $$ = $1;
-};
+c_expression
+  : logical_or_expression {
+    $$ = $1;
+  }
+  ;
 
 multiplicative_expression
   : unary_expression {
     $$ = $1;
   }
   | multiplicative_expression '*' unary_expression {
-    $$ = new BinaryExpression(BinaryOp::mulOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::mulOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   | multiplicative_expression '/' unary_expression {
-    $$ = new BinaryExpression(BinaryOp::divOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::divOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   | multiplicative_expression '%' unary_expression {
-    $$ = new BinaryExpression(BinaryOp::modOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::modOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -254,14 +265,12 @@ additive_expression
     $$ = $1;
   }
   | additive_expression '+' multiplicative_expression {
-    $$ = new BinaryExpression(BinaryOp::addOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::addOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   | additive_expression '-' multiplicative_expression {
-    $$ = new BinaryExpression(BinaryOp::subOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::subOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -270,14 +279,12 @@ shift_expression
     $$ = $1;
   }
   | shift_expression LEFT_OP additive_expression {
-    $$ = new BinaryExpression(BinaryOp::lshOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::lshOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   | shift_expression RIGHT_OP additive_expression {
-    $$ = new BinaryExpression(BinaryOp::rshOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::rshOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -286,24 +293,20 @@ relational_expression
     $$ = $1;
   }
   | relational_expression '<' shift_expression {
-    $$ = new BinaryExpression(BinaryOp::ltOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::ltOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   | relational_expression '>' shift_expression {
-    $$ = new BinaryExpression(BinaryOp::gtOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::gtOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   | relational_expression LE_OP shift_expression {
-    $$ = new BinaryExpression(BinaryOp::leOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::leOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   | relational_expression GE_OP shift_expression {
-    $$ = new BinaryExpression(BinaryOp::geOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::geOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -312,14 +315,12 @@ equality_expression
     $$ = $1;
   }
   | equality_expression EQ_OP relational_expression {
-    $$ = new BinaryExpression(BinaryOp::eqOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::eqOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   | equality_expression NE_OP relational_expression {
-    $$ = new BinaryExpression(BinaryOp::neOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::neOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -328,9 +329,8 @@ and_expression
     $$ = $1;
   }
   | and_expression '&' equality_expression {
-    $$ = new BinaryExpression(BinaryOp::andOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::andOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -339,9 +339,8 @@ exclusive_or_expression
     $$ = $1;
   }
   | exclusive_or_expression '^' and_expression {
-    $$ = new BinaryExpression(BinaryOp::xorOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::xorOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -350,9 +349,8 @@ inclusive_or_expression
     $$ = $1;
   }
   | inclusive_or_expression '|' exclusive_or_expression {
-    $$ = new BinaryExpression(BinaryOp::orOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::orOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -361,9 +359,8 @@ logical_and_expression
     $$ = $1;
   }
   | logical_and_expression AND_OP inclusive_or_expression {
-    $$ = new BinaryExpression(BinaryOp::andbOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::andbOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -372,9 +369,8 @@ logical_or_expression
     $$ = $1;
   }
   | logical_or_expression OR_OP logical_and_expression {
-    $$ = new BinaryExpression(BinaryOp::orbOp,
-                              static_cast<Expression*>($1),
-                              static_cast<Expression*>($3));
+    $$ = new BinaryExpression(BinaryOp::orbOp, static_cast<Expression *>($1),
+                              static_cast<Expression *>($3));
   }
   ;
 
@@ -387,11 +383,8 @@ extern int g_line;
 extern std::string g_lastLine;
 
 void yyerror(const char *s) {
-  fflush(stdout);
-  // printf("\n%*s\n%*s\n", g_column, "^", g_column, s);
-  std::cerr << "error: parse error at line " << g_line << " column " << g_column << ":\n";
+  std::cerr << "error: parse error at line " << g_line << " column "
+            << g_column << ":\n";
   std::cerr << g_lastLine << "\n";
   fprintf(stderr, "\n%*s\n%*s\n", g_column, "^", g_column, s);
-
-
 }

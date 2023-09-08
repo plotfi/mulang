@@ -1,27 +1,24 @@
-D      [0-9]
-L      [a-zA-Z_]
-H      [a-fA-F0-9]
-E      [Ee][+-]?{D}+
-FS      (f|F|l|L)
-IS      (u|U|l|L)*
+D  [0-9]
+L  [a-zA-Z_]
+H  [a-fA-F0-9]
+E  [Ee][+-]?{D}+
+FS (f|F|l|L)
+IS (u|U|l|L)*
 
 %{
 #include <stdio.h>
 #include <string>
+
 #define YYSTYPE void*
 #include "parser.hpp"
+#include "yyvaltype.h"
+
 int check_type();
 void count();
 void comment();
 void comment2();
 
-typedef struct yyvalType {
-  int linenum;
-  char *value;
-  char *tokText;
-} yyvalType;
-
-yyvalType *makeyyvalType(int linenum, char *value, char *token);
+static const char *identifier_str = "IDENTIFIER";
 int linenum = 0;
 %}
 
@@ -51,7 +48,9 @@ int linenum = 0;
 
 {L}({L}|{D})*          { count();
                          yylval = yytext;
-                         yylval = (void*)makeyyvalType(linenum, yytext, "IDENTIFIER");
+                         yylval =
+                           (void*)
+                           makeyyvalType(linenum, yytext, identifier_str);
                          return(check_type()); }
 
 0[xX]{H}+{IS}?         { count(); return(CONSTANT); }
@@ -118,7 +117,7 @@ void comment2() {
   while (true) {
     while ((c = YYINPUT()) != '\n' && c != 0)
       // putchar(c)
-    ;
+      ;
     break;
   }
 }
@@ -129,20 +128,19 @@ void comment() {
   while (true) {
     while ((c = YYINPUT()) != '*' && c != 0)
       // putchar(c)
-    ;
-  
+      ;
+
     if ((c1 = YYINPUT()) != '/' && c != 0) {
       // unput(c1);
       continue;
     }
-  
+
     break;
   }
 
   // if (c != 0)
   //   putchar(c1);
 }
-
 
 int g_column = 0;
 int g_line = 0;
@@ -169,7 +167,6 @@ void count() {
   // ECHO;
 }
 
-
 int check_type() {
   /// pseudo code --- this is what it should check
   ///
@@ -181,40 +178,32 @@ int check_type() {
   return IDENTIFIER;
 }
 
-
-/*
-
-Ideas or supporting recursive types:
-
-enum VariantTag {
-...
-};
-
-struct Pair;
-
-struct Variant {
-  VariantTag tag;
-
-  union u {
-    char c,
-    uint32_t ui32;
-    Pair *cons;
-    ...
+/* Ideas or supporting recursive types:
+  
+  enum VariantTag { ... };
+  struct Pair;
+  
+  struct Variant {
+    VariantTag tag;
+    union u {
+      char c,
+      uint32_t ui32;
+      Pair *cons;
+      ...
+    };
   };
-};
-
-Struct Pair {
-  Variant v1;
-  Variant v2;
-};
-
-Pair *make_pair(Variant v1, Variant v2) {
-  Pair p;
-  p.v1 = v1;
-  p.v2 = v2;
-  return p;
-}
-
-List a = make_pair(1, make_pair(2, make_pair(3, nullptr)));
-
+  
+  Struct Pair {
+    Variant v1;
+    Variant v2;
+  };
+  
+  Pair *make_pair(Variant v1, Variant v2) {
+    Pair p;
+    p.v1 = v1;
+    p.v2 = v2;
+    return p;
+  }
+  
+  List a = make_pair(1, make_pair(2, make_pair(3, nullptr)));
 */

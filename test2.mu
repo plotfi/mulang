@@ -50,10 +50,10 @@ fn fibonacci(n: int32) -> int32 {
 fn main() -> int32 {
 
   var a: int32 = bar(13) + foo(1, 2);
-  _ = printf("%d\n", a);
+  // _ = printf("%d\n", a);
 
   var fib: int32 = fibonacci(5);
-  _ = printf("fibonacci of 5 is: %d\n", fib);
+  // _ = printf("fibonacci of 5 is: %d\n", fib);
   // asdf();
 
   return 0;
