@@ -3,29 +3,24 @@
 #include <string>
 #include <vector>
 
+#include "µt8.h"
+
 // These are kinda gross, move them to another Source of Header:
 struct ASTNode;
-extern void dumpASTNode(const ASTNode *node);
-extern void dumpASTNodeType(const ASTNode *node);
+extern fv dumpASTNode(const ASTNode *node);
+extern fv dumpASTNodeType(const ASTNode *node);
 extern unsigned getASTNodeID(const ASTNode *node);
 extern unsigned astNodeCreateCount;
 extern unsigned astNodeDestroyCount;
 
-#define fn [[nodiscard]] auto
-
-class ASTNodeTracker {
-  std::vector<const ASTNode *> tracked;
-  ASTNodeTracker() {}
-  static ASTNodeTracker *instance;
-
-public:
-  static ASTNodeTracker *get() {
-    if (!instance)
-      instance = new ASTNodeTracker();
-    return instance;
+struct ASTNodeTracker {
+  typealias ASTNodeTrackerRef = ASTNodeTracker &;
+  fn static get() -> ASTNodeTrackerRef {
+    instance = instance ? instance : new ASTNodeTracker();
+    return *instance;
   }
 
-  static void destroy() {
+  fv static destroy() {
     if (instance && instance->hasTrackedNodes()) {
       std::cout << "Dumping Tracked Nodes:\n";
       for (unsigned i = 0; i < instance->tracked.size(); i++) {
@@ -41,10 +36,11 @@ public:
     instance = nullptr;
   }
 
-  void track(const ASTNode *node) { tracked.push_back(node); }
+  fn size() const -> size_t { return tracked.size(); }
+  fv track(const ASTNode *node) { tracked.push_back(node); }
 
-  void untrack(const ASTNode *node) {
-    const ASTNode *trackedNode = tracked[getASTNodeID(node)];
+  fv untrack(const ASTNode *node) {
+    let trackedNode = tracked[getASTNodeID(node)];
     assert(trackedNode == node && "tracked node mismatch!");
     tracked[getASTNodeID(node)] = nullptr;
   }
@@ -54,43 +50,43 @@ public:
                         [](const ASTNode *node) { return nullptr == node; });
   }
 
-  fn size() const -> size_t { return tracked.size(); }
-
-  virtual void dump(unsigned indent = 0) const {
+  fv virtual dump(unsigned indent = 0) const {
     for (auto *node : tracked) {
       dumpASTNode(node);
     }
   }
 
-  virtual void dumpNodeByID(unsigned id) const {
-    dumpASTNode(tracked[id]);
-  }
+  fv virtual dumpNodeByID(unsigned id) const { dumpASTNode(tracked[id]); }
+
+private:
+  std::vector<const ASTNode *> tracked;
+  ASTNodeTracker() {}
+  static ASTNodeTracker *instance;
 };
 
 struct ASTNode {
-  ASTNode() {
-    tracker = ASTNodeTracker::get();
-    id = tracker->size();
+  ASTNode() : tracker(ASTNodeTracker::get()) {
+    id = tracker.size();
     std::cout << "Previous Node: ";
     if (id) {
-      tracker->dumpNodeByID(id-1);
+      tracker.dumpNodeByID(id - 1);
     }
     std::cout << "\n";
-    assert(id != 26 && "blow up ASTNode for debug");
+    // assert(id != 26 && "blow up ASTNode for debug");
     // assert(id != 102 && "blow up ASTNode for debug");
     std::cout << "create base ASTNode with id: " << id << " !!!\n";
-    tracker->track(this);
+    tracker.track(this);
   }
   virtual ~ASTNode() {
     std::cout << "Untracking ID: " << getID() << "\n";
-    tracker->untrack(this);
+    tracker.untrack(this);
   }
-  virtual void dump(unsigned indent = 0) const = 0;
-  virtual void dumpASTNodeType() const = 0;
+  fv virtual dump(unsigned indent = 0) const = 0;
+  fv virtual dumpASTNodeType() const = 0;
   fn getID() const -> unsigned { return id; }
 
 private:
-  ASTNodeTracker *tracker = nullptr;
+  ASTNodeTracker &tracker;
   unsigned id = 0;
 };
 
@@ -147,26 +143,36 @@ inline std::ostream &operator<<(std::ostream &os, Type v) {
   return os;
 }
 
-template <typename T, unsigned newlines = 0> struct ASTList : public ASTNode {
+template <typename T, unsigned newlines = 0> class ASTList : public ASTNode {
   std::vector<T *> things;
+  typealias ASTListPtr = ASTList *;
 
+public:
   ASTList() = delete;
   ASTList(T *t) { things.push_back(t); }
   virtual ~ASTList() {
-    for (const auto *thing : things) {
+    for (let thing : things) {
       if (!thing)
         continue;
       delete thing;
     }
   }
 
-  fn append(T *t) -> ASTList* {
+  typename std::vector<T *>::const_iterator begin() const {
+    return things.cbegin();
+  };
+  typename std::vector<T *>::const_iterator end() const {
+    return things.cend();
+  };
+
+  fn append(T * _Nonnull t) -> ASTListPtr {
+    assert(t && "Expected non-null thing");
     things.push_back(t);
     return this;
   }
 
-  virtual void dump(unsigned indent = 0) const override {
-    for (auto *thing : things) {
+  fv virtual dump(unsigned indent = 0) const override {
+    for (let thing : things) {
       std::cout << "\n";
       for (unsigned i = 0; i < indent; i++)
         std::cout << "\t";
@@ -176,7 +182,7 @@ template <typename T, unsigned newlines = 0> struct ASTList : public ASTNode {
     }
   }
 
-  virtual void dumpASTNodeType() const override { std::cout << "ASTList\n"; }
+  fv virtual dumpASTNodeType() const override { std::cout << "ASTList\n"; }
 };
 
 enum class ExpressionType {
@@ -219,8 +225,8 @@ inline std::ostream &operator<<(std::ostream &os, ExpressionType v) {
 struct Expression : public ASTNode {
   virtual ~Expression() {}
   virtual ExpressionType getExpressionType() const = 0;
-  virtual void dumpInternal(unsigned indent = 0) const = 0;
-  virtual void dump(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const = 0;
+  fv virtual dump(unsigned indent = 0) const override {
     std::cout << '\n';
     for (unsigned i = 0; i < indent; i++)
       std::cout << "\t";
@@ -331,7 +337,7 @@ inline std::ostream &operator<<(std::ostream &os, BinaryOp v) {
 struct UnaryExpression : public Expression {
   UnaryOp op;
   Expression *innerExpr = nullptr;
-  UnaryExpression(UnaryOp op, Expression *innerExpr)
+  UnaryExpression(UnaryOp op, Expression * _Nonnull innerExpr)
       : op(op), innerExpr(innerExpr) {
     assert(innerExpr &&
            "inner expression on unary expression must not be null");
@@ -345,17 +351,18 @@ struct UnaryExpression : public Expression {
     return ExpressionType::Unary;
   }
 
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     std::cout << "(unary )";
   }
-  virtual void dumpASTNodeType() const override { std::cout << "UnaryExpr\n"; }
+  fv virtual dumpASTNodeType() const override { std::cout << "UnaryExpr\n"; }
 };
 
 struct BinaryExpression : public Expression {
   BinaryOp op;
   Expression *leftExpr = nullptr;
   Expression *rightExpr = nullptr;
-  BinaryExpression(BinaryOp op, Expression *leftExpr, Expression *rightExpr)
+  BinaryExpression(BinaryOp op, Expression * _Nonnull leftExpr,
+                                Expression * _Nonnull rightExpr)
       : op(op), leftExpr(leftExpr), rightExpr(rightExpr) {
 
     std::cout << "Bianry Expr:" << op << "\n";
@@ -381,10 +388,10 @@ struct BinaryExpression : public Expression {
     return ExpressionType::Binary;
   }
 
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     std::cout << "(binary )";
   }
-  virtual void dumpASTNodeType() const override { std::cout << "BinaryExpr\n"; }
+  fv virtual dumpASTNodeType() const override { std::cout << "BinaryExpr\n"; }
 };
 
 struct IdentifierExpression : public Expression {
@@ -395,8 +402,8 @@ struct IdentifierExpression : public Expression {
   virtual ExpressionType getExpressionType() const override {
     return ExpressionType::Identifier;
   }
-  virtual void dumpASTNodeType() const override { std::cout << "IdExpr\n"; }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpASTNodeType() const override { std::cout << "IdExpr\n"; }
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     std::cout << "(IDENTIFIER )";
   }
 };
@@ -406,8 +413,8 @@ struct ConstantExpression : public Expression {
   virtual ExpressionType getExpressionType() const override {
     return ExpressionType::Constant;
   }
-  virtual void dumpASTNodeType() const override { std::cout << "ConstExpr\n"; }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpASTNodeType() const override { std::cout << "ConstExpr\n"; }
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     std::cout << "(CONSTANT )";
   }
 };
@@ -417,7 +424,7 @@ struct StringLiteralExpression : public Expression {
   virtual ExpressionType getExpressionType() const override {
     return ExpressionType::StringLiteral;
   }
-  virtual void dumpASTNodeType() const override {
+  fv virtual dumpASTNodeType() const override {
     std::cout << "StirngLitExpr\n";
   }
 };
@@ -427,8 +434,8 @@ struct CallExpression : public Expression {
   virtual ExpressionType getExpressionType() const override {
     return ExpressionType::Call;
   }
-  virtual void dumpASTNodeType() const override { std::cout << "CallExpr\n"; }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpASTNodeType() const override { std::cout << "CallExpr\n"; }
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     std::cout << "(call)";
   }
 };
@@ -445,8 +452,8 @@ struct ParenthesisExpression : public Expression {
   virtual ExpressionType getExpressionType() const override {
     return ExpressionType::Parenthesis;
   }
-  virtual void dumpASTNodeType() const override { std::cout << "ParenExpr\n"; }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpASTNodeType() const override { std::cout << "ParenExpr\n"; }
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     std::cout << "(paren)";
   }
 };
@@ -494,8 +501,8 @@ struct Statement : public ASTNode {
   }
   virtual bool hasExpression() const { return false; }
   virtual StatementType getStatementType() const = 0;
-  virtual void dumpInternal(unsigned indent = 0) const = 0;
-  virtual void dump(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const = 0;
+  fv virtual dump(unsigned indent = 0) const override {
     std::cout << '\n';
     for (unsigned i = 0; i < indent; i++)
       std::cout << "\t";
@@ -509,7 +516,7 @@ struct Statement : public ASTNode {
   }
 };
 
-using StatementList = ASTList<Statement>;
+typealias StatementList = ASTList<Statement>;
 struct CompoundStatement : public Statement {
   StatementList *statements = nullptr;
   CompoundStatement(StatementList *statements = nullptr)
@@ -522,16 +529,16 @@ struct CompoundStatement : public Statement {
   virtual StatementType getStatementType() const override {
     return StatementType::Compound;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     if (statements) {
-      for (auto *statement : statements->things) {
+      for (auto *statement : *statements) {
         for (unsigned i = 0; i < indent; i++)
           std::cout << "\t";
         statement->dump(indent + 1);
       }
     }
   }
-  virtual void dumpASTNodeType() const override {
+  fv virtual dumpASTNodeType() const override {
     std::cout << "CompoundStatement\n";
   }
 };
@@ -557,7 +564,7 @@ struct SelectionIfStatement : public Statement {
   virtual StatementType getStatementType() const override {
     return StatementType::SelectionIf;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     if (ifBranch) {
       ifBranch->dump(indent + 1);
     }
@@ -566,7 +573,7 @@ struct SelectionIfStatement : public Statement {
       elseBranch->dump(indent + 1);
     }
   }
-  virtual void dumpASTNodeType() const override {
+  fv virtual dumpASTNodeType() const override {
     std::cout << "SelectIfStatement\n";
   }
 };
@@ -583,12 +590,12 @@ struct IterationWhileStatement : public Statement {
   virtual StatementType getStatementType() const override {
     return StatementType::IterationWhile;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     if (body) {
       body->dump(indent + 1);
     }
   }
-  virtual void dumpASTNodeType() const override {
+  fv virtual dumpASTNodeType() const override {
     std::cout << "IterWhileStatement\n";
   }
 };
@@ -600,8 +607,8 @@ struct JumpReturnStatement : public Statement {
   virtual StatementType getStatementType() const override {
     return StatementType::JumpReturn;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {}
-  virtual void dumpASTNodeType() const override {
+  fv virtual dumpInternal(unsigned indent = 0) const override {}
+  fv virtual dumpASTNodeType() const override {
     std::cout << "JumpRetStatement\n";
   }
 };
@@ -615,10 +622,10 @@ struct AssignmentStatement : public Statement {
   virtual StatementType getStatementType() const override {
     return StatementType::Assignment;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     std::cout << " name: " << name;
   }
-  virtual void dumpASTNodeType() const override {
+  fv virtual dumpASTNodeType() const override {
     std::cout << "AssignmentStatement\n";
   }
 };
@@ -634,10 +641,10 @@ struct InitializationStatement : public Statement {
   virtual StatementType getStatementType() const override {
     return StatementType::Initialization;
   }
-  virtual void dumpInternal(unsigned indent = 0) const override {
+  fv virtual dumpInternal(unsigned indent = 0) const override {
     std::cout << " name: " << name << ", type: " << type;
   }
-  virtual void dumpASTNodeType() const override {
+  fv virtual dumpASTNodeType() const override {
     std::cout << "InitStatement\n";
   }
 };
@@ -650,7 +657,7 @@ struct ParamDecl : public ASTNode {
   ParamDecl(std::string name, Type type) : name(name), type(type) {}
   virtual ~ParamDecl(){};
 
-  virtual void dump(unsigned indent = 0) const override {
+  fv virtual dump(unsigned indent = 0) const override {
     for (unsigned i = 0; i < indent; i++)
       std::cout << "\t";
 
@@ -658,10 +665,10 @@ struct ParamDecl : public ASTNode {
     std::cout << "name: " << name << ", ";
     std::cout << "type: " << type << " ),";
   }
-  virtual void dumpASTNodeType() const override { std::cout << "ParamDecl\n"; }
+  fv virtual dumpASTNodeType() const override { std::cout << "ParamDecl\n"; }
 };
 
-using ParamList = ASTList<ParamDecl>;
+typealias ParamList = ASTList<ParamDecl>;
 
 struct Defun : public ASTNode {
   std::string name = "";
@@ -683,7 +690,7 @@ struct Defun : public ASTNode {
     }
   }
 
-  virtual void dump(unsigned indent = 0) const override {
+  fv virtual dump(unsigned indent = 0) const override {
     for (unsigned i = 0; i < indent; i++)
       std::cout << "\t";
 
@@ -695,10 +702,10 @@ struct Defun : public ASTNode {
     }
     std::cout << ")";
   }
-  virtual void dumpASTNodeType() const override { std::cout << "DefunDecl\n"; }
+  fv virtual dumpASTNodeType() const override { std::cout << "DefunDecl\n"; }
 };
 
-using DefunList = ASTList<Defun, 1>;
+typealias DefunList = ASTList<Defun, 1>;
 
 struct TranslationUnit : public ASTNode {
   std::string name = "main";
@@ -708,8 +715,8 @@ struct TranslationUnit : public ASTNode {
   TranslationUnit(DefunList *funcs) : funcs(funcs) {}
   virtual ~TranslationUnit() { delete funcs; }
 
-  virtual void dump(unsigned indent = 0) const override { funcs->dump(); };
-  virtual void dumpASTNodeType() const override {
+  fv virtual dump(unsigned indent = 0) const override { funcs->dump(); };
+  fv virtual dumpASTNodeType() const override {
     std::cout << "TranslationUnit\n";
   }
 };

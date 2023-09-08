@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   topnode->dump();
   std::cout << "\n\n";
 
-  std::cout << "Tracked AST Node Count: " << ASTNodeTracker::get()->size()
+  std::cout << "Tracked AST Node Count: " << ASTNodeTracker::get().size()
             << "\n";
 
   std::cout << "Iterate over all tracked AST Nodes:\n\n";
