@@ -165,7 +165,7 @@ public:
     return things.cend();
   };
 
-  fn append(T * _Nonnull t) -> ASTListPtr {
+  fn append(T *t) -> ASTListPtr {
     assert(t && "Expected non-null thing");
     things.push_back(t);
     return this;
@@ -337,7 +337,7 @@ inline std::ostream &operator<<(std::ostream &os, BinaryOp v) {
 struct UnaryExpression : public Expression {
   UnaryOp op;
   Expression *innerExpr = nullptr;
-  UnaryExpression(UnaryOp op, Expression * _Nonnull innerExpr)
+  UnaryExpression(UnaryOp op, Expression *innerExpr)
       : op(op), innerExpr(innerExpr) {
     assert(innerExpr &&
            "inner expression on unary expression must not be null");
@@ -361,8 +361,8 @@ struct BinaryExpression : public Expression {
   BinaryOp op;
   Expression *leftExpr = nullptr;
   Expression *rightExpr = nullptr;
-  BinaryExpression(BinaryOp op, Expression * _Nonnull leftExpr,
-                                Expression * _Nonnull rightExpr)
+  BinaryExpression(BinaryOp op, Expression *leftExpr,
+                                Expression *rightExpr)
       : op(op), leftExpr(leftExpr), rightExpr(rightExpr) {
 
     std::cout << "Bianry Expr:" << op << "\n";
