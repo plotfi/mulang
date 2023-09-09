@@ -19,86 +19,98 @@ void comment();
 void comment2();
 
 static const char *identifier_str = "IDENTIFIER";
-int linenum = 0;
+static const char *constant_str = "CONSTANT";
+static const char *keyword_str = "KEYWORD";
+static const char *type_str = "TYPE";
+static const char *strliteral_str = "STRING_LITERAL";
+static const char *operator_str = "OPERATOR";
+static const char *puctuation_str = "PUCTUATION";
+
+int g_line = 1;
+int g_column = 1;
+std::string g_lastLine = "";
+
+#define COPY_YYVAL(num, text, kindstr) \
+  yylval = yytext; \
+  yylval = (void*) makeyyvalType(num, text, kindstr)
+
 %}
 
 %%
 "/*"                   { comment(); }
 "//"                   { comment2(); }
 
-"var"                  { count(); return(VAR); }
-"fn"                   { count(); return(FUNCTION); }
+"var"                  { count(); COPY_YYVAL(g_line, yytext, keyword_str); return(VAR); }
+"fn"                   { count(); COPY_YYVAL(g_line, yytext, keyword_str); return(FUNCTION); }
 
-"else"                 { count(); return(ELSE); }
-"if"                   { count(); return(IF); }
-"return"               { count(); return(RETURN); }
-"while"                { count(); return(WHILE); }
+"else"                 { count(); COPY_YYVAL(g_line, yytext, keyword_str); return(ELSE); }
+"if"                   { count(); COPY_YYVAL(g_line, yytext, keyword_str); return(IF); }
+"return"               { count(); COPY_YYVAL(g_line, yytext, keyword_str); return(RETURN); }
+"while"                { count(); COPY_YYVAL(g_line, yytext, keyword_str); return(WHILE); }
 
-"char"                 { count(); return(CHAR); }
-"float64"              { count(); return(DOUBLE); }
-"float32"              { count(); return(FLOAT); }
-"int32"                { count(); return(INT); }
-"int64"                { count(); return(LONG); }
-"int16"                { count(); return(SHORT); }
-"int8"                 { count(); return(INT8); }
-"uint8"                { count(); return(UINT8); }
-"uint32"               { count(); return(UINT); }
-"uint64"               { count(); return(ULONG); }
-"uint16"               { count(); return(USHORT); }
+"char"                 { count(); COPY_YYVAL(g_line, yytext, type_str); return(CHAR); }
+"float64"              { count(); COPY_YYVAL(g_line, yytext, type_str); return(DOUBLE); }
+"float32"              { count(); COPY_YYVAL(g_line, yytext, type_str); return(FLOAT); }
+"int32"                { count(); COPY_YYVAL(g_line, yytext, type_str); return(INT); }
+"int64"                { count(); COPY_YYVAL(g_line, yytext, type_str); return(LONG); }
+"int16"                { count(); COPY_YYVAL(g_line, yytext, type_str); return(SHORT); }
+"int8"                 { count(); COPY_YYVAL(g_line, yytext, type_str); return(INT8); }
+"uint8"                { count(); COPY_YYVAL(g_line, yytext, type_str); return(UINT8); }
+"uint32"               { count(); COPY_YYVAL(g_line, yytext, type_str); return(UINT); }
+"uint64"               { count(); COPY_YYVAL(g_line, yytext, type_str); return(ULONG); }
+"uint16"               { count(); COPY_YYVAL(g_line, yytext, type_str); return(USHORT); }
 
-{L}({L}|{D})*          { count();
-                         yylval = yytext;
-                         yylval =
-                           (void*)
-                           makeyyvalType(linenum, yytext, identifier_str);
-                         return(check_type()); }
+{L}({L}|{D})*          { count(); COPY_YYVAL(g_line, yytext, identifier_str); return(check_type()); }
 
-0[xX]{H}+{IS}?         { count(); return(CONSTANT); }
-0{D}+{IS}?             { count(); return(CONSTANT); }
-{D}+{IS}?              { count(); return(CONSTANT); }
-L?'(\\.|[^\\'])+'      { count(); return(CONSTANT); }
+0[xX]{H}+{IS}?         { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
+0{D}+{IS}?             { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
+{D}+{IS}?              { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
+L?'(\\.|[^\\'])+'      { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
 
-{D}+{E}{FS}?           { count(); return(CONSTANT); }
-{D}*"."{D}+({E})?{FS}? { count(); return(CONSTANT); }
-{D}+"."{D}*({E})?{FS}? { count(); return(CONSTANT); }
+{D}+{E}{FS}?           { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
+{D}*"."{D}+({E})?{FS}? { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
+{D}+"."{D}*({E})?{FS}? { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
 
-L?\"(\\.|[^\\"])*\"    { count(); return(STRING_LITERAL); }
+L?\"(\\.|[^\\"])*\"    { count(); COPY_YYVAL(g_line, yytext, strliteral_str); return(STRING_LITERAL); }
 
-">>"                   { count(); return(RIGHT_OP); }
-"<<"                   { count(); return(LEFT_OP); }
-"->"                   { count(); return(PTR_OP); }
-"&&"                   { count(); return(AND_OP); }
-"||"                   { count(); return(OR_OP); }
-"<="                   { count(); return(LE_OP); }
-">="                   { count(); return(GE_OP); }
-"=="                   { count(); return(EQ_OP); }
-"!="                   { count(); return(NE_OP); }
-";"                    { count(); return(';'); }
-("{"|"<%")             { count(); return('{'); }
-("}"|"%>")             { count(); return('}'); }
-","                    { count(); return(','); }
-":"                    { count(); return(':'); }
-"="                    { count(); return('='); }
-"("                    { count(); return('('); }
-")"                    { count(); return(')'); }
-("["|"<:")             { count(); return('['); }
-("]"|":>")             { count(); return(']'); }
-"."                    { count(); return('.'); }
-"&"                    { count(); return('&'); }
-"!"                    { count(); return('!'); }
-"~"                    { count(); return('~'); }
-"-"                    { count(); return('-'); }
-"+"                    { count(); return('+'); }
-"*"                    { count(); return('*'); }
-"/"                    { count(); return('/'); }
-"%"                    { count(); return('%'); }
-"<"                    { count(); return('<'); }
-">"                    { count(); return('>'); }
-"^"                    { count(); return('^'); }
-"|"                    { count(); return('|'); }
-"?"                    { count(); return('?'); }
+">>"                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(RIGHT_OP); }
+"<<"                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(LEFT_OP); }
+"->"                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(PTR_OP); }
+"&&"                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(AND_OP); }
+"||"                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(OR_OP); }
+"<="                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(LE_OP); }
+">="                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(GE_OP); }
+"=="                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(EQ_OP); }
+"!="                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(NE_OP); }
+
+"&"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('&'); }
+"!"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('!'); }
+"~"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('~'); }
+"-"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('-'); }
+"+"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('+'); }
+"*"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('*'); }
+"/"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('/'); }
+"%"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('%'); }
+"<"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('<'); }
+">"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('>'); }
+"^"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('^'); }
+"|"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('|'); }
+"?"                    { count(); COPY_YYVAL(g_line, yytext, operator_str);  return('?'); }
+
+";"                    { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return(';'); }
+("{"|"<%")             { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return('{'); }
+("}"|"%>")             { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return('}'); }
+","                    { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return(','); }
+":"                    { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return(':'); }
+"="                    { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return('='); }
+"("                    { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return('('); }
+")"                    { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return(')'); }
+("["|"<:")             { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return('['); }
+("]"|":>")             { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return(']'); }
+"."                    { count(); COPY_YYVAL(g_line, yytext, puctuation_str);  return('.'); }
 
 [ \t\v\n\f]            { count(); }
+[\n]                   { g_line++; count(); }
 .                      { fprintf(stderr, "Unrecognized character: '%c'\n", yytext[0]); }
 
 %%
@@ -115,9 +127,12 @@ void comment2() {
   char c;
 
   while (true) {
-    while ((c = YYINPUT()) != '\n' && c != 0)
+    while ((c = YYINPUT()) != '\n' && c != 0) {
       // putchar(c)
-      ;
+      if (c == '\n') {
+        g_line++;
+      }
+    }
     break;
   }
 }
@@ -126,12 +141,19 @@ void comment() {
   char c, c1;
 
   while (true) {
-    while ((c = YYINPUT()) != '*' && c != 0)
-      // putchar(c)
-      ;
+    while ((c = YYINPUT()) != '*' && c != 0) {
+      // putchar(c);
+      if (c == '\n') {
+        g_line++;
+      }
+    }
+
 
     if ((c1 = YYINPUT()) != '/' && c != 0) {
       // unput(c1);
+      if (c1 == '\n') {
+        g_line++;
+      }
       continue;
     }
 
@@ -142,9 +164,6 @@ void comment() {
   //   putchar(c1);
 }
 
-int g_column = 0;
-int g_line = 0;
-std::string g_lastLine = "";
 
 void count() {
   int i;

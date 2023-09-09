@@ -18,7 +18,7 @@ void dumpASTNode(const ASTNode *node) {
 
 void dumpASTNodeType(const ASTNode *node) {
   std::cout << "ASTNode dump with ID " << node->getID() << ": ";
-  node->dumpASTNodeType();
+  std::cout << node->type();
 }
 
 unsigned getASTNodeID(const ASTNode *node) { return node->getID(); }
