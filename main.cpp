@@ -7,7 +7,8 @@ int yyparse();
 extern FILE *yyin;
 extern TranslationUnit *topnode;
 ASTNodeTracker *ASTNodeTracker::instance = nullptr;
-;
+const unsigned ASTNode::static_magic_number = 0xdeadbeef;
+
 unsigned astNodeCreateCount;
 unsigned astNodeDestroyCount;
 

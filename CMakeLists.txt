@@ -12,4 +12,4 @@ add_executable(muc main.cpp yyvaltype.cpp
                             "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp"
                             "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp")
 
-set(CMAKE_CXX_FLAGS "-std=c++17 -Wc++17-extensions -I ${CMAKE_SOURCE_DIR}")
+set(CMAKE_CXX_FLAGS "-std=c++17 -Wc++17-extensions -Wall -Wextra -Werror -Wno-sign-compare -Wno-unused-parameter -Wno-unused-function -I ${CMAKE_SOURCE_DIR}")

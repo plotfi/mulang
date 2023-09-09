@@ -6,4 +6,6 @@
 #define var auto
 #define typealias using
 #define let const auto
-using uint = unsigned;
+#define var auto
+typealias uint = unsigned;
+template <typename T> using Ref = const T *_Nonnull;
