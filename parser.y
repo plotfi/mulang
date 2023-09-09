@@ -60,35 +60,36 @@ mu_function_definition
     $$ = new Defun(static_cast<yyvalType *>($2)->value,
                    checked_ptr_cast<ParamList>($4), Type::sint32_mut,
                    checked_ptr_cast<CompoundStatement>($8));
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($2)->linenum);
   }
   | FUNCTION IDENTIFIER '(' ')' PTR_OP  type_specifier compound_statement {
     $$ = new Defun(static_cast<yyvalType *>($2)->value, nullptr,
                    Type::sint32_mut, checked_ptr_cast<CompoundStatement>($7));
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($2)->linenum);
   }
   ;
 
 parameter_list
   : parameter_declaration {
     $$ = new ParamList(checked_ptr_cast<ParamDecl>($1));
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(checked_ptr_cast<ParamDecl>($1)->getLineNumber());
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        checked_ptr_cast<ParamDecl>($1)->getLineNumber());
   }
   | parameter_list ',' parameter_declaration {
-    $$ = checked_ptr_cast<ParamList>($1)->append(checked_ptr_cast<ParamDecl>($3));
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+    $$ = checked_ptr_cast<ParamList>($1)->append(
+        checked_ptr_cast<ParamDecl>($3));
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($2)->linenum);
   }
   ;
 
 parameter_declaration
   : IDENTIFIER ':' type_specifier {
     $$ = new ParamDecl(static_cast<yyvalType *>($1)->value, Type::sint32_mut);
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($2)->linenum);
   }
   ;
 
@@ -98,9 +99,9 @@ statement_list
     $$ = new StatementList(checked_ptr_cast<Statement>($1));
   }
   | statement_list statement {
-    $$ = checked_ptr_cast<StatementList>($1)->append(checked_ptr_cast<Statement>($2));
-  }
-  ;
+    $$ = checked_ptr_cast<StatementList>($1)->append(
+        checked_ptr_cast<Statement>($2));
+  };
 
 statement
   : compound_statement {
@@ -126,13 +127,13 @@ statement
 compound_statement
   : '{' '}'  {
     $$ = new CompoundStatement();
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($1)->linenum);
   }
   | '{' statement_list '}' {
     $$ = new CompoundStatement(checked_ptr_cast<StatementList>($2));
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($1)->linenum);
   }
   ;
 
@@ -248,9 +249,10 @@ unary_expression
     $$ = $1;
   }
   | '~' unary_expression {
-    $$ = new UnaryExpression(UnaryOp::invertOp, checked_ptr_cast<Expression>($2));
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+    $$ = new UnaryExpression(UnaryOp::invertOp,
+                             checked_ptr_cast<Expression>($2));
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($1)->linenum);
   }
   | '!' unary_expression {
     $$ = new UnaryExpression(UnaryOp::notOp, checked_ptr_cast<Expression>($2));
