@@ -2,6 +2,7 @@
 #include <ios>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -10,13 +11,11 @@
 
 // These are kinda gross, move them to another Source of Header:
 struct ASTNode;
-extern fv dumpASTNode(const ASTNode *node);
-extern unsigned getASTNodeID(const ASTNode *node);
+fn extern getASTNodeID(const ASTNode *node) -> unsigned;
+fv extern dumpASTNode(const ASTNode *node);
+fv extern dumpASTNodeType(const ASTNode *node);
 extern unsigned astNodeCreateCount;
 extern unsigned astNodeDestroyCount;
-
-
-fv extern dumpASTNodeType(const ASTNode *node);
 
 #define astout std::cout
 #define indentStr "  "
@@ -53,7 +52,7 @@ struct ASTNodeTracker {
   fn size() const -> size_t { return tracked.size(); }
   fv track(Ref<ASTNode> node) { tracked.push_back(node); }
 
-  fv untrack(const ASTNode *node) {
+  fv untrack(Ref<ASTNode> node) {
     let trackedNode = tracked[getASTNodeID(node)];
     assert(trackedNode == node && "tracked node mismatch!");
     tracked[getASTNodeID(node)] = nullptr;
@@ -61,11 +60,11 @@ struct ASTNodeTracker {
 
   fn hasTrackedNodes() const -> bool {
     return !std::all_of(tracked.begin(), tracked.end(),
-                        [](const ASTNode *node) { return nullptr == node; });
+                        [](Ref<ASTNode> node) { return nullptr == node; });
   }
 
   fv virtual dump(unsigned indent = 0) const {
-    for (auto *node : tracked) {
+    for (let node : tracked) {
       dumpASTNode(node);
     }
   }
@@ -73,7 +72,7 @@ struct ASTNodeTracker {
   fv virtual dumpNodeByID(unsigned id) const { dumpASTNode(tracked[id]); }
 
 private:
-  std::vector<const ASTNode *> tracked;
+  std::vector<Ref<ASTNode>> tracked;
   ASTNodeTracker() {}
   static ASTNodeTracker *instance;
 };
@@ -122,8 +121,8 @@ inline std::ostream &operator<<(std::ostream &os, ASTNodeType v) {
 }
 
 template <typename T>
-T *checked_ptr_cast(void *ptr) {
-  auto casted = static_cast<T*>(ptr);
+fn checked_ptr_cast(void *ptr) -> T * {
+  auto casted = static_cast<T *>(ptr);
   assert(casted->check() && "checked_ptr_cast failed");
   return casted;
 }
@@ -228,7 +227,6 @@ inline std::ostream &operator<<(std::ostream &os, Type v) {
 template <typename T, unsigned newlines = 0, bool printAsList = true>
 class ASTList : public ASTNode {
   std::vector<Ref<T>> things;
-  typealias ASTListPtr = ASTList *;
 
 public:
   ASTList() = delete;
@@ -248,8 +246,7 @@ public:
     return things.cend();
   };
 
-  fn append(Ref<T> t) -> ASTListPtr {
-    assert(t && "Expected non-null thing");
+  fn append(Ref<T> t) -> decltype(this) {
     things.push_back(t);
     return this;
   }
@@ -557,48 +554,50 @@ struct StringLiteralExpression : public Expression {
 typealias ExpressionList = ASTList<Expression>;
 struct CallExpression : public Expression {
   CallExpression() = delete;
-  CallExpression(std::string name, ExpressionList *exprList = nullptr):
-    name(name), exprList(exprList) {}
-  virtual ~CallExpression() {
-    if (exprList) {
-      delete exprList;
-    }
-  }
-  fn virtual getExpressionType() const -> ExpressionType override {
+  CallExpression(std::string name) : name(name) {}
+  CallExpression(std::string name,
+                 std::optional<std::unique_ptr<ExpressionList>> exprList)
+      : name(name), exprList(std::move(exprList)) {}
+  virtual ~CallExpression() {}
+
+  fn virtual getExpressionType() const->ExpressionType override {
     return ExpressionType::Call;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
     astout << "(" << type() << " " << name << " )";
-    exprList->dump(indent);
+    if (exprList.has_value()) {
+      exprList.value()->dump(indent);
+    }
     astout << ")";
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual type() const->ASTNodeType override {
     return ASTNodeType::CallExpr;
   }
 
 private:
   std::string name = "";
-  ExpressionList *exprList = nullptr;
+  std::optional<std::unique_ptr<ExpressionList>> exprList;
 };
 
 struct ParenthesisExpression : public Expression {
-  Expression *innerExpr = nullptr;
-  ParenthesisExpression(Expression *innerExpr = nullptr)
-      : innerExpr(innerExpr) {}
-  virtual ~ParenthesisExpression() {
-    if (!innerExpr)
-      return;
-    delete innerExpr;
-  }
+  ParenthesisExpression(std::unique_ptr<Expression> innerExpr)
+      : innerExpr(std::move(innerExpr)) {}
+  virtual ~ParenthesisExpression() {}
+
   fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Parenthesis;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << type() << " )";
+    astout << "(" << type() << " ";
+    innerExpr->dump(indent + 1);
+    astout << " )";
   }
   fn virtual type() const -> ASTNodeType override {
     return ASTNodeType::ParenthesisExpr;
   }
+
+private:
+  std::unique_ptr<Expression> innerExpr;
 };
 
 enum class StatementType {
@@ -839,38 +838,34 @@ typealias ParamList = ASTList<ParamDecl>;
 
 struct Defun : public ASTNode {
   std::string name = "";
-  ParamList *params = nullptr;
+  std::optional<std::unique_ptr<ParamList>> params;
   Type returnType = Type::sint32_mut;
-  CompoundStatement *body;
+  Ref<CompoundStatement> body;
 
   Defun() = default;
-  Defun(const Defun &) = default;
+  Defun(const Defun &) = delete;
   Defun(Defun &&) = delete;
   Defun &operator=(const Defun &) = delete;
   Defun &operator=(Defun &&) = delete;
-  Defun(std::string name, ParamList *params, Type returnType,
-        CompoundStatement *body)
-      : name(name), params(params), returnType(returnType), body(body) {}
+
+  Defun(std::string name, std::unique_ptr<ParamList> params, Type returnType,
+        Ref<CompoundStatement> body)
+      : name(name), params(std::move(params)), returnType(returnType), body(body) {}
+  Defun(std::string name, Type returnType, Ref<CompoundStatement> body)
+      : name(name), returnType(returnType), body(body) {}
 
   virtual ~Defun() {
-    if (params) {
-      delete params;
-    }
-
-    if (body) {
-      delete body;
-    }
+    delete body;
   }
 
   fv virtual dump(unsigned indent = 0) const override {
     astout << "(defun name: " << name << ", type: " << returnType;
     astout << " " << type() << " ";
     this->dumpNodeInfo();
-    if (params)
-      params->dump(indent + 1);
-    if (body) {
-      body->dump(indent + 1);
+    if (params.has_value()) {
+      params.value()->dump(indent + 1);
     }
+    body->dump(indent + 1);
     astout << ")";
   }
   fn virtual type() const -> ASTNodeType override {

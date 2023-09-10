@@ -57,14 +57,15 @@ toplevel_declaration
 mu_function_definition
   : FUNCTION IDENTIFIER '(' parameter_list ')' PTR_OP
       type_specifier compound_statement {
+    auto P = std::unique_ptr<ParamList>(checked_ptr_cast<ParamList>($4));
     $$ = new Defun(static_cast<yyvalType *>($2)->value,
-                   checked_ptr_cast<ParamList>($4), Type::sint32_mut,
+                   std::move(P), Type::sint32_mut,
                    checked_ptr_cast<CompoundStatement>($8));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<yyvalType *>($2)->linenum);
   }
   | FUNCTION IDENTIFIER '(' ')' PTR_OP  type_specifier compound_statement {
-    $$ = new Defun(static_cast<yyvalType *>($2)->value, nullptr,
+    $$ = new Defun(static_cast<yyvalType *>($2)->value,
                    Type::sint32_mut, checked_ptr_cast<CompoundStatement>($7));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<yyvalType *>($2)->linenum);
@@ -221,7 +222,8 @@ primary_expression
     $$ = nullptr;
   }
   | '(' expression ')' {
-    $$ = new ParenthesisExpression(checked_ptr_cast<Expression>($2));
+    auto E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
+    $$ = new ParenthesisExpression(std::move(E));
     checked_ptr_cast<ASTNode>($$)
       ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
   }
@@ -232,15 +234,16 @@ primary_expression
 
 call_expression
   : IDENTIFIER '(' expression_list ')'  {
-    $$ = new CallExpression(static_cast<yyvalType *>($1)->value,
-                            checked_ptr_cast<ExpressionList>($3));
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+    auto E =
+        std::unique_ptr<ExpressionList>(checked_ptr_cast<ExpressionList>($3));
+    $$ = new CallExpression(static_cast<yyvalType *>($1)->value, std::move(E));
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($1)->linenum);
   }
   | IDENTIFIER '(' ')' {
     $$ = new CallExpression(static_cast<yyvalType *>($1)->value);
-    checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+    checked_ptr_cast<ASTNode>($$)->setLineNumber(
+        static_cast<yyvalType *>($1)->linenum);
   }
   ;
 
