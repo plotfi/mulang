@@ -657,14 +657,11 @@ struct Statement : public ASTNode {
 
 typealias StatementList = ASTList<Statement>;
 struct CompoundStatement : public Statement {
-  StatementList *statements = nullptr;
-  CompoundStatement(StatementList *statements = nullptr)
-      : statements(statements) {}
-  virtual ~CompoundStatement() {
-    if (!statements)
-      return;
-    delete statements;
-  }
+  CompoundStatement() = default;
+  CompoundStatement(std::unique_ptr<StatementList>statements)
+      : statements(std::move(statements)) {}
+  virtual ~CompoundStatement() {}
+
   fn virtual hasExpression() const -> bool override { return false; }
   fn virtual getExpression() const -> Ref<Expression> override {
     assert(false && "Statement can not have an expresson.");
@@ -674,17 +671,23 @@ struct CompoundStatement : public Statement {
     return StatementType::Compound;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    if (statements) {
-      for (auto statement : *statements) {
-        for (unsigned i = 0; i < indent; i++)
-          astout << "\t";
-        statement->dump(indent + 1);
+    if (!statements.has_value())
+      return;
+    for (auto I = statements.value()->begin(), E = statements.value()->end();
+         I != E; ++I) {
+      auto statement = *I;
+      for (unsigned i = 0; i < indent; i++) {
+        astout << indentStr;
       }
+      statement->dump(indent + 1);
     }
   }
   fn virtual type() const -> ASTNodeType override {
     return ASTNodeType::CompoundStat;
   }
+
+private:
+  std::optional<std::unique_ptr<StatementList>> statements;
 };
 
 struct SelectionIfStatement : public Statement {

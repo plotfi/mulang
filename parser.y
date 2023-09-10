@@ -34,7 +34,7 @@ TranslationUnit *topnode;
 /*** mu top-level constructs ***/
 translation_unit
   : toplevel_declaration_list {
-    auto FL = std::unique_ptr<DefunList>(checked_ptr_cast<DefunList>($1));
+    var FL = std::unique_ptr<DefunList>(checked_ptr_cast<DefunList>($1));
     topnode = new TranslationUnit(std::move(FL));
   }
   ;
@@ -57,7 +57,7 @@ toplevel_declaration
 mu_function_definition
   : FUNCTION IDENTIFIER '(' parameter_list ')' PTR_OP
       type_specifier compound_statement {
-    auto P = std::unique_ptr<ParamList>(checked_ptr_cast<ParamList>($4));
+    var P = std::unique_ptr<ParamList>(checked_ptr_cast<ParamList>($4));
     $$ = new Defun(static_cast<yyvalType *>($2)->value,
                    std::move(P), Type::sint32_mut,
                    checked_ptr_cast<CompoundStatement>($8));
@@ -132,7 +132,8 @@ compound_statement
         static_cast<yyvalType *>($1)->linenum);
   }
   | '{' statement_list '}' {
-    $$ = new CompoundStatement(checked_ptr_cast<StatementList>($2));
+    var B = std::unique_ptr<StatementList>(checked_ptr_cast<StatementList>($2));
+    $$ = new CompoundStatement(std::move(B));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<yyvalType *>($1)->linenum);
   }
@@ -222,7 +223,7 @@ primary_expression
     $$ = nullptr;
   }
   | '(' expression ')' {
-    auto E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
+    var E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
     $$ = new ParenthesisExpression(std::move(E));
     checked_ptr_cast<ASTNode>($$)
       ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
@@ -234,7 +235,7 @@ primary_expression
 
 call_expression
   : IDENTIFIER '(' expression_list ')'  {
-    auto E =
+    var E =
         std::unique_ptr<ExpressionList>(checked_ptr_cast<ExpressionList>($3));
     $$ = new CallExpression(static_cast<yyvalType *>($1)->value, std::move(E));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
