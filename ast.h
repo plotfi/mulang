@@ -326,13 +326,17 @@ inline std::ostream &operator<<(std::ostream &os, ExpressionType v) {
 
 struct Expression : public ASTNode {
   virtual ~Expression() {}
-  virtual ExpressionType getExpressionType() const = 0;
+  fn virtual getExpressionType() const -> ExpressionType = 0;
   fv virtual dumpInternal(unsigned indent = 0) const = 0;
   fv virtual dump(unsigned indent = 0) const override {
     astout << '\n';
     for (unsigned i = 0; i < indent; i++)
       astout << indentStr;
-    astout << "(" << "\033[31m" << "expression type: " << "\033[0m" << getExpressionType();
+    astout << "("
+           << "\033[31m"
+           << "expression type: "
+           << "\033[0m"
+           << getExpressionType();
     astout << " " << type() << " ";
     this->dumpNodeInfo();
     this->dumpInternal(indent + 1);
@@ -451,7 +455,7 @@ struct UnaryExpression : public Expression {
       return;
     delete innerExpr;
   }
-  virtual ExpressionType getExpressionType() const override {
+  fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Unary;
   }
 
@@ -481,14 +485,10 @@ struct BinaryExpression : public Expression {
   }
 
   virtual ~BinaryExpression() {
-    if (leftExpr) {
-      delete leftExpr;
-    }
-    if (rightExpr) {
-      delete rightExpr;
-    }
+    delete leftExpr;
+    delete rightExpr;
   }
-  virtual ExpressionType getExpressionType() const override {
+  fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Binary;
   }
 
@@ -514,7 +514,7 @@ struct IdentifierExpression : public Expression {
   IdentifierExpression() = delete;
   IdentifierExpression(std::string name) : name(name) {}
   virtual ~IdentifierExpression() {}
-  virtual ExpressionType getExpressionType() const override {
+  fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Identifier;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -530,7 +530,7 @@ struct ConstantExpression : public Expression {
   ConstantExpression() = delete;
   ConstantExpression(std::string constant): constant(constant) {}
   virtual ~ConstantExpression() {}
-  virtual ExpressionType getExpressionType() const override {
+  fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Constant;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -546,7 +546,7 @@ private:
 
 struct StringLiteralExpression : public Expression {
   virtual ~StringLiteralExpression() {}
-  virtual ExpressionType getExpressionType() const override {
+  fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::StringLiteral;
   }
   fn virtual type() const -> ASTNodeType override {
@@ -564,7 +564,7 @@ struct CallExpression : public Expression {
       delete exprList;
     }
   }
-  virtual ExpressionType getExpressionType() const override {
+  fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Call;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -590,7 +590,7 @@ struct ParenthesisExpression : public Expression {
       return;
     delete innerExpr;
   }
-  virtual ExpressionType getExpressionType() const override {
+  fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Parenthesis;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -635,15 +635,10 @@ inline std::ostream &operator<<(std::ostream &os, StatementType v) {
 }
 
 struct Statement : public ASTNode {
-  Expression *expr = nullptr;
-  Statement(Expression *expr = nullptr) : expr(expr) {}
-  virtual ~Statement() {
-    if (!expr)
-      return;
-    delete expr;
-  }
-  virtual bool hasExpression() const { return false; }
-  virtual StatementType getStatementType() const = 0;
+  virtual ~Statement() { }
+  fn virtual hasExpression() const -> bool = 0;
+  fn virtual getExpression() const -> Ref<Expression> = 0;
+  fn virtual getStatementType() const -> StatementType = 0;
   fv virtual dumpInternal(unsigned indent = 0) const = 0;
   fv virtual dump(unsigned indent = 0) const override {
     astout << '\n';
@@ -654,8 +649,8 @@ struct Statement : public ASTNode {
     this->dumpNodeInfo();
     this->dumpInternal(indent + 1);
     fflush(stdout);
-    if (expr) {
-      expr->dump(indent + 1);
+    if (hasExpression()) {
+      getExpression()->dump(indent + 1);
     }
     astout << ")";
   }
@@ -665,13 +660,18 @@ typealias StatementList = ASTList<Statement>;
 struct CompoundStatement : public Statement {
   StatementList *statements = nullptr;
   CompoundStatement(StatementList *statements = nullptr)
-      : Statement(nullptr), statements(statements) {}
+      : statements(statements) {}
   virtual ~CompoundStatement() {
     if (!statements)
       return;
     delete statements;
   }
-  virtual StatementType getStatementType() const override {
+  fn virtual hasExpression() const -> bool override { return false; }
+  fn virtual getExpression() const -> Ref<Expression> override {
+    assert(false && "Statement can not have an expresson.");
+    exit(EXIT_FAILURE);
+  }
+  fn virtual getStatementType() const -> StatementType override {
     return StatementType::Compound;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -689,24 +689,25 @@ struct CompoundStatement : public Statement {
 };
 
 struct SelectionIfStatement : public Statement {
-  CompoundStatement *ifBranch = nullptr;
+  Ref<Expression> expr;
+  Ref<CompoundStatement> ifBranch;
   CompoundStatement *elseBranch = nullptr;
 
   SelectionIfStatement() = delete;
-  SelectionIfStatement(Expression *expr, CompoundStatement *ifBranch,
+  SelectionIfStatement(Ref<Expression> expr, Ref<CompoundStatement> ifBranch,
                        CompoundStatement *elseBranch = nullptr)
-      : Statement(expr), ifBranch(ifBranch), elseBranch(elseBranch) {}
+      : expr(expr), ifBranch(ifBranch), elseBranch(elseBranch) {}
   virtual ~SelectionIfStatement() {
-    if (ifBranch) {
-      delete ifBranch;
-    }
+    delete expr;
+    delete ifBranch;
     if (elseBranch) {
       delete elseBranch;
     }
   }
 
-  virtual bool hasExpression() const override { return true; }
-  virtual StatementType getStatementType() const override {
+  fn virtual hasExpression() const -> bool override { return true; }
+  fn virtual getExpression() const -> Ref<Expression> override { return expr; }
+  fn virtual getStatementType() const -> StatementType override {
     return StatementType::SelectionIf;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -724,15 +725,18 @@ struct SelectionIfStatement : public Statement {
 };
 
 struct IterationWhileStatement : public Statement {
-  CompoundStatement *body = nullptr;
-  IterationWhileStatement(Expression *expr, CompoundStatement *body)
-      : Statement(expr), body(body) {}
+  Ref<Expression> expr;
+  Ref<CompoundStatement> body;
+  IterationWhileStatement(Ref<Expression> expr, Ref<CompoundStatement> body)
+      : expr(expr), body(body) {}
   virtual ~IterationWhileStatement() {
-    if (!body)
-      return;
+    delete expr;
     delete body;
   }
-  virtual StatementType getStatementType() const override {
+
+  fn virtual hasExpression() const -> bool override { return true; }
+  fn virtual getExpression() const -> Ref<Expression> override { return expr; }
+  fn virtual getStatementType() const -> StatementType override {
     return StatementType::IterationWhile;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -746,10 +750,16 @@ struct IterationWhileStatement : public Statement {
 };
 
 struct JumpReturnStatement : public Statement {
+  Ref<Expression> expr;
   JumpReturnStatement() = delete;
-  JumpReturnStatement(Expression *expr) : Statement(expr) {}
+  JumpReturnStatement(Ref<Expression> expr) : expr(expr) {}
+  virtual ~JumpReturnStatement() {
+    delete expr;
+  }
 
-  virtual StatementType getStatementType() const override {
+  fn virtual hasExpression() const -> bool override { return true; }
+  fn virtual getExpression() const -> Ref<Expression> override { return expr; }
+  fn virtual getStatementType() const -> StatementType override {
     return StatementType::JumpReturn;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {}
@@ -759,12 +769,19 @@ struct JumpReturnStatement : public Statement {
 };
 
 struct AssignmentStatement : public Statement {
+  Ref<Expression> expr;
   std::string name;
 
-  AssignmentStatement(Expression *expr, std::string name)
-      : Statement(expr), name(name) {}
+  AssignmentStatement(Ref<Expression> expr, std::string name)
+      : expr(expr), name(name) {}
 
-  virtual StatementType getStatementType() const override {
+  virtual ~AssignmentStatement() {
+    delete expr;
+  }
+
+  fn virtual hasExpression() const -> bool override { return true; }
+  fn virtual getExpression() const -> Ref<Expression> override { return expr; }
+  fn virtual getStatementType() const -> StatementType override {
     return StatementType::Assignment;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -776,14 +793,19 @@ struct AssignmentStatement : public Statement {
 };
 
 struct InitializationStatement : public Statement {
+  Ref<Expression> expr;
   std::string name;
   Type varType;
 
-  InitializationStatement(Expression *expr, std::string name, Type varType)
-      : Statement(expr), name(name), varType(varType) {}
-  virtual ~InitializationStatement() {}
+  InitializationStatement(Ref<Expression> expr, std::string name, Type varType)
+      : expr(expr), name(name), varType(varType) {}
+  virtual ~InitializationStatement() {
+    delete expr;
+  }
 
-  virtual StatementType getStatementType() const override {
+  fn virtual hasExpression() const -> bool override { return true; }
+  fn virtual getExpression() const -> Ref<Expression> override { return expr; }
+  fn virtual getStatementType() const -> StatementType override {
     return StatementType::Initialization;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {

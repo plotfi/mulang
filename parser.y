@@ -34,7 +34,7 @@ TranslationUnit *topnode;
 /*** mu top-level constructs ***/
 translation_unit
   : toplevel_declaration_list {
-    var FL = std::unique_ptr<DefunList>(checked_ptr_cast<DefunList>($1));
+    auto FL = std::unique_ptr<DefunList>(checked_ptr_cast<DefunList>($1));
     topnode = new TranslationUnit(std::move(FL));
   }
   ;

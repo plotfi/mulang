@@ -3,7 +3,6 @@
 
 #define fn [[nodiscard]] auto
 #define fv void
-#define var auto
 #define typealias using
 #define let const auto
 #define var auto
