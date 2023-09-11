@@ -51,7 +51,8 @@ flex_target(lexer lexer.l "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp")
 bison_target(parser parser.y "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp" VERBOSE)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wno-sign-compare \
-                     -Wno-unused-parameter -Wno-unused-function")
+                     -Wno-unused-parameter -Wno-unused-function \
+                     -Wno-ambiguous-reversed-operator")
 
 add_executable(muc main.cpp yyvaltype.cpp
                             "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp"
