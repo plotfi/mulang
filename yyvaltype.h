@@ -1,12 +1,17 @@
 #ifndef YYVALTYPE
 #define YYVALTYPE
 
-typedef struct yyvalType {
-  int linenum;
-  char *value;
-  char *tokText;
-} yyvalType;
+#include "ast.h"
 
-yyvalType *makeyyvalType(int linenum, char *value, const char *token);
+struct YYValType {
+  YYValType(unsigned linenum, std::string value, std::string tokText)
+      : linenum(linenum), value(value), tokText(tokText) {}
+  unsigned linenum;
+  std::string value;
+  std::string tokText;
+};
+
+Ref<YYValType> makeYYValType(unsigned linenum, Ref<char> value, Ref<char> token);
+fv clearYYValStorage();
 
 #endif

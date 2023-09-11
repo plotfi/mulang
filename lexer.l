@@ -26,13 +26,13 @@ static const char *strliteral_str = "STRING_LITERAL";
 static const char *operator_str = "OPERATOR";
 static const char *puctuation_str = "PUCTUATION";
 
-int g_line = 1;
-int g_column = 1;
+unsigned g_line = 1;
+unsigned g_column = 1;
 std::string g_lastLine = "";
 
 #define COPY_YYVAL(num, text, kindstr) \
   yylval = yytext; \
-  yylval = (void*) makeyyvalType(num, text, kindstr)
+  yylval = (void*) makeYYValType(num, text, kindstr)
 
 %}
 

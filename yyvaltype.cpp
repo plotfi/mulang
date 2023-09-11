@@ -1,12 +1,22 @@
-#include "yyvaltype.h"
+#include <memory>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <vector>
 
-yyvalType *makeyyvalType(int linenum, char *value, const char *token) {
-  yyvalType *ret = (yyvalType *)malloc(sizeof(yyvalType));
-  ret->linenum = linenum;
-  ret->value = strdup(value);
-  ret->tokText = strdup(token);
-  return ret;
+#include "yyvaltype.h"
+#include "µt8.h"
+
+static std::vector<const YYValType> YYValStorage;
+
+fn makeYYValType(unsigned linenum, Ref<char> value, Ref<char> token)
+    ->Ref<YYValType> {
+  YYValStorage.emplace_back(linenum, std::string(value), std::string(token));
+  return &YYValStorage.back();
+}
+
+fv clearYYValStorage() {
+  std::cout << "Total YYVals Used: " << YYValStorage.size() << "\n";
+  YYValStorage.clear();
 }

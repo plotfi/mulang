@@ -60,18 +60,18 @@ mu_function_definition
     var P = std::unique_ptr<ParamList>(checked_ptr_cast<ParamList>($4));
     var B = std::unique_ptr<CompoundStatement>(
         checked_ptr_cast<CompoundStatement>($8));
-    $$ = new Defun(static_cast<yyvalType *>($2)->value, std::move(P),
+    $$ = new Defun(static_cast<YYValType *>($2)->value, std::move(P),
                    Type::sint32_mut, std::move(B));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($2)->linenum);
+        static_cast<YYValType *>($2)->linenum);
   }
   | FUNCTION IDENTIFIER '(' ')' PTR_OP  type_specifier compound_statement {
     var B = std::unique_ptr<CompoundStatement>(
         checked_ptr_cast<CompoundStatement>($7));
-    $$ = new Defun(static_cast<yyvalType *>($2)->value, Type::sint32_mut,
+    $$ = new Defun(static_cast<YYValType *>($2)->value, Type::sint32_mut,
                    std::move(B));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($2)->linenum);
+        static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -85,15 +85,15 @@ parameter_list
     $$ = checked_ptr_cast<ParamList>($1)->append(
         checked_ptr_cast<ParamDecl>($3));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($2)->linenum);
+        static_cast<YYValType *>($2)->linenum);
   }
   ;
 
 parameter_declaration
   : IDENTIFIER ':' type_specifier {
-    $$ = new ParamDecl(static_cast<yyvalType *>($1)->value, Type::sint32_mut);
+    $$ = new ParamDecl(static_cast<YYValType *>($1)->value, Type::sint32_mut);
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($2)->linenum);
+        static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -132,13 +132,13 @@ compound_statement
   : '{' '}'  {
     $$ = new CompoundStatement();
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($1)->linenum);
+        static_cast<YYValType *>($1)->linenum);
   }
   | '{' statement_list '}' {
     var B = std::unique_ptr<StatementList>(checked_ptr_cast<StatementList>($2));
     $$ = new CompoundStatement(std::move(B));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($1)->linenum);
+        static_cast<YYValType *>($1)->linenum);
   }
   ;
 
@@ -147,14 +147,14 @@ selection_statement
     $$ = new SelectionIfStatement(checked_ptr_cast<Expression>($2),
                                   checked_ptr_cast<CompoundStatement>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   | IF expression compound_statement ELSE compound_statement {
     $$ = new SelectionIfStatement(checked_ptr_cast<Expression>($2),
                                   checked_ptr_cast<CompoundStatement>($3),
                                   checked_ptr_cast<CompoundStatement>($5));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   ;
 
@@ -163,7 +163,7 @@ iteration_statement
     $$ = new IterationWhileStatement(checked_ptr_cast<Expression>($2),
                                      checked_ptr_cast<CompoundStatement>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   ;
 
@@ -171,26 +171,26 @@ jump_statement
   : RETURN expression ';' {
     $$ = new JumpReturnStatement(checked_ptr_cast<Expression>($2));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   ;
 
 assignment_statement
   : IDENTIFIER '=' expression ';' {
     $$ = new AssignmentStatement(checked_ptr_cast<Expression>($3),
-                                 static_cast<yyvalType *>($1)->value);
+                                 static_cast<YYValType *>($1)->value);
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   ;
 
 init_statement
   : VAR IDENTIFIER ':' type_specifier '=' expression ';' {
     $$ = new InitializationStatement(checked_ptr_cast<Expression>($6),
-                                     static_cast<yyvalType *>($2)->value,
+                                     static_cast<YYValType *>($2)->value,
                                      Type::sint32_mut);
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -213,14 +213,14 @@ type_specifier
 /*** mu expressions ***/
 primary_expression
   : IDENTIFIER {
-    $$ = new IdentifierExpression(static_cast<yyvalType *>($1)->value);
+    $$ = new IdentifierExpression(static_cast<YYValType *>($1)->value);
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   | CONSTANT {
-    $$ = new ConstantExpression(static_cast<yyvalType *>($1)->value);
+    $$ = new ConstantExpression(static_cast<YYValType *>($1)->value);
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   | STRING_LITERAL {
     $$ = nullptr;
@@ -229,7 +229,7 @@ primary_expression
     var E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
     $$ = new ParenthesisExpression(std::move(E));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   | call_expression {
     $$ = $1;
@@ -240,14 +240,14 @@ call_expression
   : IDENTIFIER '(' expression_list ')'  {
     var E =
         std::unique_ptr<ExpressionList>(checked_ptr_cast<ExpressionList>($3));
-    $$ = new CallExpression(static_cast<yyvalType *>($1)->value, std::move(E));
+    $$ = new CallExpression(static_cast<YYValType *>($1)->value, std::move(E));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($1)->linenum);
+        static_cast<YYValType *>($1)->linenum);
   }
   | IDENTIFIER '(' ')' {
-    $$ = new CallExpression(static_cast<yyvalType *>($1)->value);
+    $$ = new CallExpression(static_cast<YYValType *>($1)->value);
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($1)->linenum);
+        static_cast<YYValType *>($1)->linenum);
   }
   ;
 
@@ -259,19 +259,19 @@ unary_expression
     var E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
     $$ = new UnaryExpression(UnaryOp::invertOp, std::move(E));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        static_cast<yyvalType *>($1)->linenum);
+        static_cast<YYValType *>($1)->linenum);
   }
   | '!' unary_expression {
     var E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
     $$ = new UnaryExpression(UnaryOp::notOp, std::move(E));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   | '-' unary_expression {
     var E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
     $$ = new UnaryExpression(UnaryOp::negOp, std::move(E));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   ;
 
@@ -283,7 +283,7 @@ expression_list
     $$ = checked_ptr_cast<ExpressionList>($1)->
       append(checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -308,19 +308,19 @@ multiplicative_expression
     $$ = new BinaryExpression(BinaryOp::mulOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   | multiplicative_expression '/' unary_expression {
     $$ = new BinaryExpression(BinaryOp::divOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   | multiplicative_expression '%' unary_expression {
     $$ = new BinaryExpression(BinaryOp::modOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -332,13 +332,13 @@ additive_expression
     $$ = new BinaryExpression(BinaryOp::addOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   | additive_expression '-' multiplicative_expression {
     $$ = new BinaryExpression(BinaryOp::subOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -350,13 +350,13 @@ shift_expression
     $$ = new BinaryExpression(BinaryOp::lshOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   | shift_expression RIGHT_OP additive_expression {
     $$ = new BinaryExpression(BinaryOp::rshOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -368,25 +368,25 @@ relational_expression
     $$ = new BinaryExpression(BinaryOp::ltOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   | relational_expression '>' shift_expression {
     $$ = new BinaryExpression(BinaryOp::gtOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   | relational_expression LE_OP shift_expression {
     $$ = new BinaryExpression(BinaryOp::leOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   | relational_expression GE_OP shift_expression {
     $$ = new BinaryExpression(BinaryOp::geOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -398,13 +398,13 @@ equality_expression
     $$ = new BinaryExpression(BinaryOp::eqOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   | equality_expression NE_OP relational_expression {
     $$ = new BinaryExpression(BinaryOp::neOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -416,7 +416,7 @@ and_expression
     $$ = new BinaryExpression(BinaryOp::andOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -428,7 +428,7 @@ exclusive_or_expression
     $$ = new BinaryExpression(BinaryOp::xorOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -440,7 +440,7 @@ inclusive_or_expression
     $$ = new BinaryExpression(BinaryOp::orOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -452,7 +452,7 @@ logical_and_expression
     $$ = new BinaryExpression(BinaryOp::andbOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 
@@ -464,7 +464,7 @@ logical_or_expression
     $$ = new BinaryExpression(BinaryOp::orbOp, checked_ptr_cast<Expression>($1),
                               checked_ptr_cast<Expression>($3));
     checked_ptr_cast<ASTNode>($$)
-      ->setLineNumber(static_cast<yyvalType *>($2)->linenum);
+      ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
   ;
 

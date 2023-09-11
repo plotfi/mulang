@@ -1,3 +1,6 @@
+#ifndef _AST_H_
+#define _AST_H_
+
 #include <cstdlib>
 #include <ios>
 #include <iostream>
@@ -14,11 +17,18 @@ struct ASTNode;
 fn inline getASTNodeID(Ref<ASTNode> node) -> unsigned;
 fv inline dumpASTNode(Ref<ASTNode> node);
 fv inline dumpASTNodeType(Ref<ASTNode> node);
+fv clearYYValStorage();
 
 #define astout std::cout
 #define indentStr "  "
 
 struct ASTNodeTracker {
+  // explicit ASTNodeTracker(VectorRef<ASTNode> tracked)
+  //     : tracked(std::move(tracked)) {}
+  ASTNodeTracker(const ASTNodeTracker &) = default;
+  ASTNodeTracker(ASTNodeTracker &&) = delete;
+  ASTNodeTracker &operator=(const ASTNodeTracker &) = default;
+  ASTNodeTracker &operator=(ASTNodeTracker &&) = delete;
   virtual ~ASTNodeTracker() {}
 
   fn static get() -> const ASTNodeTracker& {
@@ -45,6 +55,7 @@ struct ASTNodeTracker {
            "Expected all nodes to be untracked by dtors");
     delete instance.value();
     instance.reset();
+    clearYYValStorage();
   }
 
   fn size() const -> size_t { return tracked.size(); }
@@ -155,7 +166,7 @@ inline std::ostream &operator<<(std::ostream &os, ASTNodeType v) {
 
 template <typename T>
 fn checked_ptr_cast(MutableRef<void> ptr) -> MutableRef<T> {
-  auto casted = static_cast<MutableRef<T>>(ptr);
+  var casted = static_cast<MutableRef<T>>(ptr);
   assert(casted->check() && "checked_ptr_cast failed");
   return casted;
 }
@@ -174,11 +185,15 @@ struct ASTNode {
     astout << "create base ASTNode with id: " << id << " !!!\n";
     tracker.track(this);
   }
+  // explicit ASTNode(const ASTNodeTracker &tracker) : tracker(tracker) {}
+  ASTNode(const ASTNode &) = default;
+  ASTNode(ASTNode &&) = delete;
+  ASTNode &operator=(const ASTNode &) = delete;
+  ASTNode &operator=(ASTNode &&) = delete;
   virtual ~ASTNode() {
     astout << "Untracking ID: " << getID() << "\n";
     tracker.untrack(this);
   }
-
 
   fv dumpNodeInfo() const {
     astout << " (ASTNode id: " << id;
@@ -273,9 +288,11 @@ class ASTList : public ASTNode {
 
 public:
   ASTList() = delete;
-  ASTList(Ref<T> t) {
-    things.push_back(t);
-  }
+  ASTList(const ASTList &) = delete;
+  ASTList(ASTList &&) = delete;
+  ASTList &operator=(const ASTList &) = delete;
+  ASTList &operator=(ASTList &&) = delete;
+  ASTList(Ref<T> t) { things.push_back(t); }
   virtual ~ASTList() {
     for (let thing : things) {
       delete thing;
@@ -364,6 +381,10 @@ inline std::ostream &operator<<(std::ostream &os, ExpressionType v) {
 }
 
 struct Expression : public ASTNode {
+  // Expression(const Expression &) = default;
+  // Expression(Expression &&) = delete;
+  // Expression &operator=(const Expression &) = delete;
+  // Expression &operator=(Expression &&) = delete;
   virtual ~Expression() {}
   fn virtual getExpressionType() const -> ExpressionType = 0;
   fv virtual dumpInternal(unsigned indent = 0) const = 0;
@@ -483,6 +504,10 @@ inline std::ostream &operator<<(std::ostream &os, BinaryOp v) {
 }
 
 struct UnaryExpression : public Expression {
+  UnaryExpression(const UnaryExpression &) = delete;
+  UnaryExpression(UnaryExpression &&) = delete;
+  UnaryExpression &operator=(const UnaryExpression &) = delete;
+  UnaryExpression &operator=(UnaryExpression &&) = delete;
   UnaryExpression(UnaryOp op, std::unique_ptr<Expression> innerExpr)
       : op(op), innerExpr(std::move(innerExpr)) {}
   virtual ~UnaryExpression() {}
@@ -506,8 +531,12 @@ private:
 };
 
 struct BinaryExpression : public Expression {
+  BinaryExpression(const BinaryExpression &) = default;
+  BinaryExpression(BinaryExpression &&) = delete;
+  BinaryExpression &operator=(const BinaryExpression &) = delete;
+  BinaryExpression &operator=(BinaryExpression &&) = delete;
   BinaryExpression(BinaryOp op, Ref<Expression> leftExpr,
-                                Ref<Expression> rightExpr)
+                   Ref<Expression> rightExpr)
       : op(op), leftExpr(leftExpr), rightExpr(rightExpr) {
     assert(leftExpr && rightExpr &&
            "inner expressions on binary expression must not be null");
@@ -539,6 +568,10 @@ private:
 
 struct IdentifierExpression : public Expression {
   IdentifierExpression() = delete;
+  IdentifierExpression(const IdentifierExpression &) = default;
+  IdentifierExpression(IdentifierExpression &&) = delete;
+  IdentifierExpression &operator=(const IdentifierExpression &) = delete;
+  IdentifierExpression &operator=(IdentifierExpression &&) = delete;
   IdentifierExpression(std::string name) : name(name) {}
   virtual ~IdentifierExpression() {}
   fn virtual getExpressionType() const -> ExpressionType override {
@@ -558,7 +591,11 @@ private:
 
 struct ConstantExpression : public Expression {
   ConstantExpression() = delete;
-  ConstantExpression(std::string constant): constant(constant) {}
+  ConstantExpression(const ConstantExpression &) = default;
+  ConstantExpression(ConstantExpression &&) = delete;
+  ConstantExpression &operator=(const ConstantExpression &) = delete;
+  ConstantExpression &operator=(ConstantExpression &&) = delete;
+  ConstantExpression(std::string constant) : constant(constant) {}
   virtual ~ConstantExpression() {}
   fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Constant;
@@ -575,6 +612,10 @@ private:
 };
 
 struct StringLiteralExpression : public Expression {
+  StringLiteralExpression(const StringLiteralExpression &) = default;
+  StringLiteralExpression(StringLiteralExpression &&) = delete;
+  StringLiteralExpression &operator=(const StringLiteralExpression &) = delete;
+  StringLiteralExpression &operator=(StringLiteralExpression &&) = delete;
   virtual ~StringLiteralExpression() {}
   fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::StringLiteral;
@@ -587,6 +628,10 @@ struct StringLiteralExpression : public Expression {
 typealias ExpressionList = ASTList<Expression>;
 struct CallExpression : public Expression {
   CallExpression() = delete;
+  CallExpression(const CallExpression &) = delete;
+  CallExpression(CallExpression &&) = delete;
+  CallExpression &operator=(const CallExpression &) = delete;
+  CallExpression &operator=(CallExpression &&) = delete;
   CallExpression(std::string name) : name(name) {}
   CallExpression(std::string name,
                  OptionalOwnedRef<ExpressionList> exprList)
@@ -613,6 +658,10 @@ private:
 };
 
 struct ParenthesisExpression : public Expression {
+  ParenthesisExpression(const ParenthesisExpression &) = delete;
+  ParenthesisExpression(ParenthesisExpression &&) = delete;
+  ParenthesisExpression &operator=(const ParenthesisExpression &) = delete;
+  ParenthesisExpression &operator=(ParenthesisExpression &&) = delete;
   ParenthesisExpression(std::unique_ptr<Expression> innerExpr)
       : innerExpr(std::move(innerExpr)) {}
   virtual ~ParenthesisExpression() {}
@@ -667,7 +716,11 @@ inline std::ostream &operator<<(std::ostream &os, StatementType v) {
 }
 
 struct Statement : public ASTNode {
-  virtual ~Statement() { }
+  // Statement(const Statement &) = default;
+  // Statement(Statement &&) = delete;
+  // Statement &operator=(const Statement &) = delete;
+  // Statement &operator=(Statement &&) = delete;
+  virtual ~Statement() {}
   fn virtual hasExpression() const -> bool = 0;
   fn virtual getExpression() const -> Ref<Expression> = 0;
   fn virtual getStatementType() const -> StatementType = 0;
@@ -691,7 +744,11 @@ struct Statement : public ASTNode {
 typealias StatementList = ASTList<Statement>;
 struct CompoundStatement : public Statement {
   CompoundStatement() = default;
-  CompoundStatement(std::unique_ptr<StatementList>statements)
+  CompoundStatement(const CompoundStatement &) = delete;
+  CompoundStatement(CompoundStatement &&) = delete;
+  CompoundStatement &operator=(const CompoundStatement &) = delete;
+  CompoundStatement &operator=(CompoundStatement &&) = delete;
+  CompoundStatement(std::unique_ptr<StatementList> statements)
       : statements(std::move(statements)) {}
   virtual ~CompoundStatement() {}
 
@@ -718,6 +775,10 @@ private:
 
 struct SelectionIfStatement : public Statement {
   SelectionIfStatement() = delete;
+  SelectionIfStatement(const SelectionIfStatement &) = default;
+  SelectionIfStatement(SelectionIfStatement &&) = delete;
+  SelectionIfStatement &operator=(const SelectionIfStatement &) = delete;
+  SelectionIfStatement &operator=(SelectionIfStatement &&) = delete;
   SelectionIfStatement(Ref<Expression> expr, Ref<CompoundStatement> ifBranch,
                        Ref<CompoundStatement> elseBranch)
       : expr(expr), ifBranch(ifBranch), elseBranch(elseBranch) {}
@@ -759,6 +820,10 @@ private:
 struct IterationWhileStatement : public Statement {
   Ref<Expression> expr;
   Ref<CompoundStatement> body;
+  IterationWhileStatement(const IterationWhileStatement &) = default;
+  IterationWhileStatement(IterationWhileStatement &&) = delete;
+  IterationWhileStatement &operator=(const IterationWhileStatement &) = delete;
+  IterationWhileStatement &operator=(IterationWhileStatement &&) = delete;
   IterationWhileStatement(Ref<Expression> expr, Ref<CompoundStatement> body)
       : expr(expr), body(body) {}
   virtual ~IterationWhileStatement() {
@@ -784,6 +849,10 @@ struct IterationWhileStatement : public Statement {
 struct JumpReturnStatement : public Statement {
   Ref<Expression> expr;
   JumpReturnStatement() = delete;
+  JumpReturnStatement(const JumpReturnStatement &) = default;
+  JumpReturnStatement(JumpReturnStatement &&) = delete;
+  JumpReturnStatement &operator=(const JumpReturnStatement &) = delete;
+  JumpReturnStatement &operator=(JumpReturnStatement &&) = delete;
   JumpReturnStatement(Ref<Expression> expr) : expr(expr) {}
   virtual ~JumpReturnStatement() {
     delete expr;
@@ -804,6 +873,10 @@ struct AssignmentStatement : public Statement {
   Ref<Expression> expr;
   std::string name;
 
+  AssignmentStatement(const AssignmentStatement &) = default;
+  AssignmentStatement(AssignmentStatement &&) = delete;
+  AssignmentStatement &operator=(const AssignmentStatement &) = delete;
+  AssignmentStatement &operator=(AssignmentStatement &&) = delete;
   AssignmentStatement(Ref<Expression> expr, std::string name)
       : expr(expr), name(name) {}
 
@@ -829,6 +902,10 @@ struct InitializationStatement : public Statement {
   std::string name;
   Type varType;
 
+  InitializationStatement(const InitializationStatement &) = default;
+  InitializationStatement(InitializationStatement &&) = delete;
+  InitializationStatement &operator=(const InitializationStatement &) = delete;
+  InitializationStatement &operator=(InitializationStatement &&) = delete;
   InitializationStatement(Ref<Expression> expr, std::string name, Type varType)
       : expr(expr), name(name), varType(varType) {}
   virtual ~InitializationStatement() {
@@ -850,6 +927,10 @@ struct InitializationStatement : public Statement {
 
 struct ParamDecl : public ASTNode {
   ParamDecl() = delete;
+  ParamDecl(const ParamDecl &) = default;
+  ParamDecl(ParamDecl &&) = delete;
+  ParamDecl &operator=(const ParamDecl &) = delete;
+  ParamDecl &operator=(ParamDecl &&) = delete;
   ParamDecl(std::string name, Type varType) : name(name), varType(varType) {}
   virtual ~ParamDecl(){};
   fv virtual dump(unsigned indent = 0) const override {
@@ -928,3 +1009,5 @@ struct TranslationUnit : public ASTNode {
     return ASTNodeType::TranslationUnit;
   }
 };
+
+#endif /* _AST_H_ */
