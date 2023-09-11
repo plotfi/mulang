@@ -1,7 +1,7 @@
 #ifndef YYVALTYPE
 #define YYVALTYPE
 
-#include "ast.h"
+#include "Mu/Parser/ast.h"
 
 struct YYValType {
   YYValType(unsigned linenum, std::string value, std::string tokText)

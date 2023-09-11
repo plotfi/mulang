@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "yyvaltype.h"
-#include "µt8.h"
+#include "Mu/Parser/yyvaltype.h"
+#include "Mu/Support/µt8.h"
 
 static std::vector<const YYValType> YYValStorage;
 

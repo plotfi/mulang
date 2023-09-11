@@ -10,8 +10,9 @@ IS (u|U|l|L)*
 #include <string>
 
 #define YYSTYPE void*
+
 #include "parser.hpp"
-#include "yyvaltype.h"
+#include "Mu/Parser/yyvaltype.h"
 
 int check_type();
 void count();

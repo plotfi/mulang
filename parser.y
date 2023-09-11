@@ -1,8 +1,9 @@
 %{
 #include <cstdio>
 #include <cstdlib>
-#include "ast.h"
-#include "yyvaltype.h"
+
+#include "Mu/Parser/ast.h"
+#include "Mu/Parser/yyvaltype.h"
 
 #if 1
 #define debug_print(...) printf(__VA_ARGS__)

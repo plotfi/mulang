@@ -1,9 +1,10 @@
-#include <ast.h>
 #include <fstream>
 #include <iostream>
 #include <optional>
 #include <valarray>
 #include <vector>
+
+#include "Mu/Parser/ast.h"
 
 int yyparse();
 extern FILE *yyin;
