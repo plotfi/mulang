@@ -47,13 +47,19 @@ add_subdirectory(lib)
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
-flex_target(lexer lexer.l "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp")
-bison_target(parser parser.y "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp" VERBOSE)
+set(MU_PARSEGEN_SRC_DIR "${MU_SOURCE_DIR}/lib/Mu/Parser")
+
+flex_target(lexer "${MU_PARSEGEN_SRC_DIR}/lexer.l"
+                  "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp")
+
+bison_target(parser "${MU_PARSEGEN_SRC_DIR}/parser.y"
+                    "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp"
+                    VERBOSE)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wno-sign-compare \
                      -Wno-unused-parameter -Wno-unused-function \
                      -Wno-ambiguous-reversed-operator")
 
 add_executable(muc main.cpp yyvaltype.cpp
-                            "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp"
-                            "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp")
+                   "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp"
+                   "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp")
