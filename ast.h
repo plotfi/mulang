@@ -870,7 +870,7 @@ private:
 typealias ParamList = ASTList<ParamDecl>;
 
 struct Defun : public ASTNode {
-  Defun() = default;
+  Defun() = delete;
   Defun(const Defun &) = delete;
   Defun(Defun &&) = delete;
   Defun &operator=(const Defun &) = delete;
