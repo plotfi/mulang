@@ -483,16 +483,9 @@ inline std::ostream &operator<<(std::ostream &os, BinaryOp v) {
 }
 
 struct UnaryExpression : public Expression {
-  UnaryExpression(UnaryOp op, Ref<Expression> innerExpr)
-      : op(op), innerExpr(innerExpr) {
-    assert(innerExpr &&
-           "inner expression on unary expression must not be null");
-  }
-  virtual ~UnaryExpression() {
-    if (!innerExpr)
-      return;
-    delete innerExpr;
-  }
+  UnaryExpression(UnaryOp op, std::unique_ptr<Expression> innerExpr)
+      : op(op), innerExpr(std::move(innerExpr)) {}
+  virtual ~UnaryExpression() {}
   fn virtual getExpressionType() const -> ExpressionType override {
     return ExpressionType::Unary;
   }
@@ -509,25 +502,16 @@ struct UnaryExpression : public Expression {
 
 private:
   UnaryOp op;
-  Ref<Expression> innerExpr;
+  std::unique_ptr<Expression> innerExpr;
 };
 
 struct BinaryExpression : public Expression {
   BinaryExpression(BinaryOp op, Ref<Expression> leftExpr,
                                 Ref<Expression> rightExpr)
       : op(op), leftExpr(leftExpr), rightExpr(rightExpr) {
-
-    astout << "Bianry Expr:" << op << "\n";
-    astout << "root ID: " << this->getID() << "\n";
-    astout << "left ID: " << leftExpr->getID() << "\n";
-    astout << "right ID: " << rightExpr->getID() << "\n";
-    leftExpr->dump();
-    rightExpr->dump();
-    astout << "\n";
     assert(leftExpr && rightExpr &&
            "inner expressions on binary expression must not be null");
   }
-
   virtual ~BinaryExpression() {
     delete leftExpr;
     delete rightExpr;

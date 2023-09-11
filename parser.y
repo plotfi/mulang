@@ -256,18 +256,20 @@ unary_expression
     $$ = $1;
   }
   | '~' unary_expression {
-    $$ = new UnaryExpression(UnaryOp::invertOp,
-                             checked_ptr_cast<Expression>($2));
+    var E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
+    $$ = new UnaryExpression(UnaryOp::invertOp, std::move(E));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<yyvalType *>($1)->linenum);
   }
   | '!' unary_expression {
-    $$ = new UnaryExpression(UnaryOp::notOp, checked_ptr_cast<Expression>($2));
+    var E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
+    $$ = new UnaryExpression(UnaryOp::notOp, std::move(E));
     checked_ptr_cast<ASTNode>($$)
       ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
   }
   | '-' unary_expression {
-    $$ = new UnaryExpression(UnaryOp::negOp, checked_ptr_cast<Expression>($2));
+    var E = std::unique_ptr<Expression>(checked_ptr_cast<Expression>($2));
+    $$ = new UnaryExpression(UnaryOp::negOp, std::move(E));
     checked_ptr_cast<ASTNode>($$)
       ->setLineNumber(static_cast<yyvalType *>($1)->linenum);
   }
