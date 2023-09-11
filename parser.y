@@ -58,15 +58,18 @@ mu_function_definition
   : FUNCTION IDENTIFIER '(' parameter_list ')' PTR_OP
       type_specifier compound_statement {
     var P = std::unique_ptr<ParamList>(checked_ptr_cast<ParamList>($4));
-    $$ = new Defun(static_cast<yyvalType *>($2)->value,
-                   std::move(P), Type::sint32_mut,
-                   checked_ptr_cast<CompoundStatement>($8));
+    var B = std::unique_ptr<CompoundStatement>(
+        checked_ptr_cast<CompoundStatement>($8));
+    $$ = new Defun(static_cast<yyvalType *>($2)->value, std::move(P),
+                   Type::sint32_mut, std::move(B));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<yyvalType *>($2)->linenum);
   }
   | FUNCTION IDENTIFIER '(' ')' PTR_OP  type_specifier compound_statement {
-    $$ = new Defun(static_cast<yyvalType *>($2)->value,
-                   Type::sint32_mut, checked_ptr_cast<CompoundStatement>($7));
+    var B = std::unique_ptr<CompoundStatement>(
+        checked_ptr_cast<CompoundStatement>($7));
+    $$ = new Defun(static_cast<yyvalType *>($2)->value, Type::sint32_mut,
+                   std::move(B));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<yyvalType *>($2)->linenum);
   }

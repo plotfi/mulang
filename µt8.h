@@ -1,6 +1,10 @@
 // µt8.h
 // Support header for making C++ look more like mulang
 
+#include <memory>
+#include <vector>
+#include <optional>
+
 #define fn [[nodiscard]] auto
 #define fv void
 #define typealias using
@@ -8,3 +12,8 @@
 #define var auto
 typealias uint = unsigned;
 template <typename T> using Ref = const T *_Nonnull;
+template <typename T> using MutableRef = T *_Nonnull;
+template <typename T> using VectorRef = std::vector<Ref<T>>;
+template <typename T> using OptionalRef = std::optional<Ref<T>>;
+template <typename T> using OptionalOwnedRef =
+  std::optional<std::unique_ptr<T>>;

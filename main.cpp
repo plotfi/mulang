@@ -1,28 +1,15 @@
 #include <ast.h>
 #include <fstream>
 #include <iostream>
+#include <optional>
+#include <valarray>
 #include <vector>
 
 int yyparse();
 extern FILE *yyin;
 extern TranslationUnit *topnode;
-ASTNodeTracker *ASTNodeTracker::instance = nullptr;
+std::optional<Ref<ASTNodeTracker>> ASTNodeTracker::instance;
 const unsigned ASTNode::static_magic_number = 0xdeadbeef;
-
-unsigned astNodeCreateCount;
-unsigned astNodeDestroyCount;
-
-void dumpASTNode(const ASTNode *node) {
-  // std::cout << "ASTNode dump with ID " << node->id << ": ";
-  node->dump();
-}
-
-void dumpASTNodeType(const ASTNode *node) {
-  std::cout << "ASTNode dump with ID " << node->getID() << ": ";
-  std::cout << node->type();
-}
-
-unsigned getASTNodeID(const ASTNode *node) { return node->getID(); }
 
 #if YYDEBUG
 extern int yydebug;

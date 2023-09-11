@@ -49,6 +49,7 @@ fn fibonacci(n: int32) -> int32 {
 
 fn main() -> int32 {
 
+  var b: int32 = -1;
   var a: int32 = bar(13) + foo(1, 2);
   // _ = printf("%d\n", a);
 
