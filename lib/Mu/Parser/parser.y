@@ -5,6 +5,8 @@
 #include "Mu/Parser/ast.h"
 #include "Mu/Parser/yyvaltype.h"
 
+#include "llvm/Support/raw_ostream.h"
+
 using namespace muast;
 
 #if 1
@@ -18,7 +20,7 @@ void yyerror(const char *s);
 
 #define YYSTYPE void*
 
-muast::TranslationUnit *topnode;
+muast::TranslationUnit *topnode = nullptr;
 %}
 
 %token VAR FUNCTION
@@ -480,8 +482,8 @@ extern int g_line;
 extern std::string g_lastLine;
 
 void yyerror(const char *s) {
-  std::cerr << "error: parse error at line " << g_line << " column "
-            << g_column << ":\n";
-  std::cerr << g_lastLine << "\n";
+  llvm::errs() << "error: parse error at line " << g_line << " column "
+               << g_column << ":\n";
+  llvm::errs() << g_lastLine << "\n";
   fprintf(stderr, "\n%*s\n%*s\n", g_column, "^", g_column, s);
 }

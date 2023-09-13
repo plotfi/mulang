@@ -6,11 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the entry point for the Toy compiler.
+// This file implements the entry point for the Mu compiler.
 //
 //===----------------------------------------------------------------------===//
 
 #include "Mu/MuDialect.h"
+#include <algorithm>
 #include <memory>
 #include <fstream>
 #include <iostream>
@@ -27,6 +28,7 @@
 #include "mlir/Parser/Parser.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -36,8 +38,11 @@
 using namespace mlir::mu;
 namespace cl = llvm::cl;
 
+std::optional<Ref<muast::ASTNodeTracker>> muast::ASTNodeTracker::instance;
+const unsigned muast::ASTNode::static_magic_number = 0xdeadbeef;
+
 static cl::opt<std::string> inputFilename(cl::Positional,
-                                          cl::desc("<input toy file>"),
+                                          cl::desc("<input mu file>"),
                                           cl::init("-"),
                                           cl::value_desc("filename"));
 
@@ -48,27 +53,30 @@ extern FILE *yyin;
 extern int yydebug;
 #endif
 
-void parse(Ref<char> filename) {
+extern muast::TranslationUnit *topnode;
+
+//===----------------------------------------------------------------------===//
+/// Returns a Mu AST resulting from parsing the file or a nullptr on error.
+
+std::unique_ptr<muast::TranslationUnit> parseInputFile(llvm::StringRef filename) {
 #if YYDEBUG
   yydebug = 0;
 #endif
-  yyin = fopen(filename, "r");
+  yyin = fopen(filename.data(), "r");
   yyparse();
   fclose(yyin);
+  yyin = nullptr;
+  auto TU = std::unique_ptr<muast::TranslationUnit>(topnode);
+  topnode = nullptr;
+  return TU;
 }
-
-extern muast::TranslationUnit *topnode;
-std::optional<Ref<muast::ASTNodeTracker>> muast::ASTNodeTracker::instance;
-const unsigned muast::ASTNode::static_magic_number = 0xdeadbeef;
-
-//===----------------------------------------------------------------------===//
 
 namespace {
 enum InputType { Mu , MLIR };
 } // namespace
 static cl::opt<enum InputType> inputType(
     "x", cl::init(Mu), cl::desc("Decided the kind of output desired"),
-    cl::values(clEnumValN(Mu, "toy", "load the input file as a Toy source.")),
+    cl::values(clEnumValN(Mu, "mu", "load the input file as a Mu source.")),
     cl::values(clEnumValN(MLIR, "mlir",
                           "load the input file as an MLIR file")));
 
@@ -80,11 +88,6 @@ static cl::opt<enum Action> emitAction(
     cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
     cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")));
 
-
-/// Returns a Toy AST resulting from parsing the file or a nullptr on error.
-int* parseInputFile(llvm::StringRef filename) {
-  return nullptr;
-}
 
 int dumpMLIR() {
   mlir::MLIRContext context;
@@ -101,7 +104,7 @@ int dumpMLIR() {
     if (!module)
       return 1;
 
-    // module->dump();
+    module->dump();
     return 0;
   }
 
@@ -129,7 +132,7 @@ int dumpMLIR() {
 
 int dumpAST() {
   if (inputType == InputType::MLIR) {
-    llvm::errs() << "Can't dump a Toy AST when the input is MLIR\n";
+    llvm::errs() << "Can't dump a Mu AST when the input is MLIR\n";
     return 5;
   }
 
@@ -138,36 +141,35 @@ int dumpAST() {
     return 1;
 
   // dump(*moduleAST);
+  moduleAST->dump();
+  llvm::errs() << "Tracked Node Count: "
+               << muast::ASTNodeTracker::get().size() << "\n";
+
   return 0;
 }
 
-auto main(int argc, char **argv) -> int {
+fn main(int argc, char **argv) -> int {
 
   // Register any command line options.
   mlir::registerAsmPrinterCLOptions();
   mlir::registerMLIRContextCLOptions();
-  cl::ParseCommandLineOptions(argc, argv, "toy compiler\n");
+  cl::ParseCommandLineOptions(argc, argv, "mu compiler\n");
 
   switch (emitAction) {
-  case Action::DumpAST:
-    return dumpAST();
-  case Action::DumpMLIR:
-    return dumpMLIR();
+  case Action::DumpAST: {
+    if (dumpAST())
+      return -1;
+    break;
+  }
+  case Action::DumpMLIR: {
+    if (dumpMLIR())
+      return -1;
+    break;
+  }
   default:
     llvm::errs() << "No action specified (parsing only?), use -emit=<action>\n";
-  }
-
-  if (argc < 2) {
-    std::cerr << "Expected: " << argv[0] << " filename.c\n";
     return -1;
   }
 
-  parse(argv[1]);
-
-  std::cout << "TOPNODE NAME: " << "main"  << "\n";
-  topnode->dump();
-  std::cout << "Tracked Node Count: " << muast::ASTNodeTracker::get().size() << "\n";
-
-  delete topnode;
   muast::ASTNodeTracker::destroy();
 }

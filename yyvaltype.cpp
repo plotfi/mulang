@@ -8,6 +8,8 @@
 #include "Mu/Parser/yyvaltype.h"
 #include "Mu/Support/µt8.h"
 
+#include "llvm/Support/raw_ostream.h"
+
 static std::vector<const muast::YYValType> YYValStorage;
 
 fn muast::makeYYValType(unsigned linenum, Ref<char> value, Ref<char> token)
@@ -17,6 +19,6 @@ fn muast::makeYYValType(unsigned linenum, Ref<char> value, Ref<char> token)
 }
 
 fv muast::clearYYValStorage() {
-  std::cout << "Total YYVals Used: " << YYValStorage.size() << "\n";
+  llvm::errs() << "Total YYVals Used: " << YYValStorage.size() << "\n";
   YYValStorage.clear();
 }
