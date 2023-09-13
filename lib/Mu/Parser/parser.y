@@ -5,6 +5,8 @@
 #include "Mu/Parser/ast.h"
 #include "Mu/Parser/yyvaltype.h"
 
+using namespace muast;
+
 #if 1
 #define debug_print(...) printf(__VA_ARGS__)
 #else
@@ -16,7 +18,7 @@ void yyerror(const char *s);
 
 #define YYSTYPE void*
 
-TranslationUnit *topnode;
+muast::TranslationUnit *topnode;
 %}
 
 %token VAR FUNCTION

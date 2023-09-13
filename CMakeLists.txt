@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 project(muc LANGUAGES CXX C)
 
+set(LLVM_LINK_COMPONENTS
+  Support
+  )
+
 set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
 
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "C++ standard to conform to")
@@ -63,3 +67,24 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wno-sign-compare \
 add_executable(muc main.cpp yyvaltype.cpp
                    "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp"
                    "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp")
+
+get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+set(LIBS
+        ${dialect_libs}
+        ${conversion_libs}
+        MLIRArithDialect
+        MLIROptLib
+        MLIRMu
+        )
+
+llvm_update_compile_flags(muc)
+target_link_libraries(muc
+  PRIVATE
+    MLIRAnalysis
+    MLIRFunctionInterfaces
+    MLIRIR
+    MLIRParser
+    MLIRSideEffectInterfaces
+    MLIRTransforms
+    ${LIBS})

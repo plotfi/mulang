@@ -12,15 +12,16 @@
 
 #include "Mu/Support/µt8.h"
 
+#define astout std::cout
+#define indentStr "  "
+
+namespace muast {
 // These are kinda gross, move them to another Source of Header:
 struct ASTNode;
 fn inline getASTNodeID(Ref<ASTNode> node) -> unsigned;
 fv inline dumpASTNode(Ref<ASTNode> node);
 fv inline dumpASTNodeType(Ref<ASTNode> node);
 fv clearYYValStorage();
-
-#define astout std::cout
-#define indentStr "  "
 
 struct ASTNodeTracker {
   // explicit ASTNodeTracker(VectorRef<ASTNode> tracked)
@@ -1009,5 +1010,6 @@ struct TranslationUnit : public ASTNode {
     return ASTNodeType::TranslationUnit;
   }
 };
+} // namespace muast
 
 #endif /* _AST_H_ */

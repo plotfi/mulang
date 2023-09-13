@@ -14,6 +14,8 @@ IS (u|U|l|L)*
 #include "parser.hpp"
 #include "Mu/Parser/yyvaltype.h"
 
+using namespace muast;
+
 int check_type();
 void count();
 void comment();
