@@ -712,7 +712,7 @@ typealias DefunList = ASTList<Defun, 1, false>;
 
 struct TranslationUnit : public ASTNode {
   TranslationUnit() = delete;
-  TranslationUnit(std::unique_ptr<DefunList> funcs) : funcs(std::move(funcs)) {}
+  TranslationUnit(std::unique_ptr<DefunList> functions) : functions(std::move(functions)) {}
   virtual ~TranslationUnit() { }
 
   fv virtual dump(unsigned indent = 0) const override {
@@ -720,16 +720,19 @@ struct TranslationUnit : public ASTNode {
     this->dumpNodeInfo();
     astout << "\n";
 
-    funcs->dump();
+    functions->dump();
   };
 
   fn virtual type() const -> ASTNodeType override {
     return ASTNodeType::TranslationUnit;
   }
 
+  auto begin() { return functions->begin(); }
+  auto end() { return functions->end(); }
+
 private:
   std::string name = "main";
-  std::unique_ptr<DefunList> funcs;
+  std::unique_ptr<DefunList> functions;
 };
 
 } // namespace muast

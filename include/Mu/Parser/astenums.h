@@ -10,6 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef _ASTENUMS_H_
+#define _ASTENUMS_H_
+
 #include "llvm/Support/raw_ostream.h"
 
 namespace muast {
@@ -319,3 +322,5 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, StatementType v) {
 
 } // namespace enums
 } // namespace muast
+
+#endif // _ASTENUMS_H_

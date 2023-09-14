@@ -12,6 +12,7 @@
 
 #include "Mu/MuDialect.h"
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
 #include <fstream>
 #include <iostream>
@@ -21,6 +22,7 @@
 
 #include "Mu/Parser/ast.h"
 
+#include "Mu/Support/µt8.h"
 #include "mlir/IR/AsmState.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
@@ -49,6 +51,7 @@ static cl::opt<std::string> inputFilename(cl::Positional,
 //===- Bison Parse Handling Code ------------------------------------------===//
 int yyparse();
 extern FILE *yyin;
+
 #if YYDEBUG
 extern int yydebug;
 #endif
@@ -58,38 +61,51 @@ extern muast::TranslationUnit *topnode;
 //===----------------------------------------------------------------------===//
 /// Returns a Mu AST resulting from parsing the file or a nullptr on error.
 
-std::unique_ptr<muast::TranslationUnit> parseInputFile(llvm::StringRef filename) {
-#if YYDEBUG
+namespace {
+
+fv bisonReset() {
+  // Bison is gross. Reset everything Bison related here.
+  #if YYDEBUG
   yydebug = 0;
-#endif
-  yyin = fopen(filename.data(), "r");
-  yyparse();
-  fclose(yyin);
+  #endif
   yyin = nullptr;
-  auto TU = std::unique_ptr<muast::TranslationUnit>(topnode);
   topnode = nullptr;
-  return TU;
 }
 
-namespace {
-enum InputType { Mu , MLIR };
-} // namespace
-static cl::opt<enum InputType> inputType(
+fn parseInputFile(llvm::StringRef filename)
+    -> std::unique_ptr<muast::TranslationUnit> {
+  bisonReset();
+
+  // Sure wish this was C23
+  Defer<decltype(yyin)> D1{yyin = fopen(filename.data(), "r"), [](auto f) {
+                             fclose(f);
+                             bisonReset();
+                           }};
+
+  // Bison is gross, especially GNU Bison 2.3 on macOS where global yyin is the
+  // input to yyparse()
+  assert(yyin != nullptr && topnode == nullptr && "Test pre-parse pointers.");
+  yyparse();
+
+  assert(topnode != nullptr && "Expected non-null topnode");
+  return std::unique_ptr<muast::TranslationUnit>(topnode);
+}
+
+enum InputType { Mu, MLIR };
+enum Action { None, DumpAST, DumpMLIR };
+
+cl::opt<enum InputType> inputType(
     "x", cl::init(Mu), cl::desc("Decided the kind of output desired"),
     cl::values(clEnumValN(Mu, "mu", "load the input file as a Mu source.")),
     cl::values(clEnumValN(MLIR, "mlir",
                           "load the input file as an MLIR file")));
 
-namespace {
-enum Action { None, DumpAST, DumpMLIR };
-} // namespace
-static cl::opt<enum Action> emitAction(
+cl::opt<enum Action> emitAction(
     "emit", cl::desc("Select the kind of output desired"),
     cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
     cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")));
 
-
-int dumpMLIR() {
+fn dumpMLIR()->int {
   mlir::MLIRContext context;
   // Load our Dialect in this MLIR Context.
   context.getOrLoadDialect<mlir::mu::MuDialect>();
@@ -100,7 +116,8 @@ int dumpMLIR() {
     auto moduleAST = parseInputFile(inputFilename);
     if (!moduleAST)
       return 6;
-    mlir::OwningOpRef<mlir::ModuleOp> module = nullptr; //mlirGen(context, *moduleAST);
+    mlir::OwningOpRef<mlir::ModuleOp> module =
+        nullptr; // mlirGen(context, *moduleAST);
     if (!module)
       return 1;
 
@@ -130,7 +147,7 @@ int dumpMLIR() {
   return 0;
 }
 
-int dumpAST() {
+fn dumpAST() -> int {
   if (inputType == InputType::MLIR) {
     llvm::errs() << "Can't dump a Mu AST when the input is MLIR\n";
     return 5;
@@ -142,13 +159,14 @@ int dumpAST() {
 
   // dump(*moduleAST);
   moduleAST->dump();
-  llvm::errs() << "Tracked Node Count: "
-               << muast::ASTNodeTracker::get().size() << "\n";
+  llvm::errs() << "Tracked Node Count: " << muast::ASTNodeTracker::get().size()
+               << "\n";
 
   return 0;
 }
+} // namespace
 
-fn main(int argc, char **argv) -> int {
+fn main(int argc, char **argv)->int {
 
   // Register any command line options.
   mlir::registerAsmPrinterCLOptions();
