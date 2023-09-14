@@ -10,15 +10,15 @@
 
 #include "llvm/Support/raw_ostream.h"
 
-static std::vector<const muast::YYValType> YYValStorage;
+static std::vector<const mu::ast::YYValType> YYValStorage;
 
-fn muast::makeYYValType(unsigned linenum, Ref<char> value, Ref<char> token)
-    ->Ref<muast::YYValType> {
+fn mu::ast::makeYYValType(unsigned linenum, Ref<char> value, Ref<char> token)
+    ->Ref<mu::ast::YYValType> {
   YYValStorage.emplace_back(linenum, std::string(value), std::string(token));
   return &YYValStorage.back();
 }
 
-fv muast::clearYYValStorage() {
+fv mu::ast::clearYYValStorage() {
   llvm::errs() << "Total YYVals Used: " << YYValStorage.size() << "\n";
   YYValStorage.clear();
 }

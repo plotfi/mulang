@@ -30,7 +30,9 @@
 #define astout llvm::errs()
 #define indentStr "  "
 
-namespace muast {
+namespace mu {
+namespace ast {
+
 // These are kinda gross, move them to another Source of Header:
 struct ASTNode;
 fn inline getASTNodeID(Ref<ASTNode> node) -> unsigned;
@@ -38,7 +40,7 @@ fv inline dumpASTNode(Ref<ASTNode> node);
 fv inline dumpASTNodeType(Ref<ASTNode> node);
 fv clearYYValStorage();
 
-using namespace muast::enums;
+using namespace mu::ast::enums;
 
 struct ASTNodeTracker {
   // explicit ASTNodeTracker(VectorRef<ASTNode> tracked)
@@ -161,7 +163,7 @@ struct ASTNode {
 private:
   const ASTNodeTracker &tracker;
   uint id = 0;
-  muast::Location location;
+  mu::ast::Location location;
   const unsigned magic_number = ASTNode::static_magic_number;
 };
 
@@ -824,6 +826,7 @@ private:
   std::unique_ptr<DefunList> functions;
 };
 
-} // namespace muast
+} // namespace mu
+} // namespace ast
 
 #endif /* _AST_H_ */

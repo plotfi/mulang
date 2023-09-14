@@ -7,7 +7,7 @@
 
 #include "llvm/Support/raw_ostream.h"
 
-using namespace muast;
+using namespace mu::ast;
 
 #if 1
 #define debug_print(...) printf(__VA_ARGS__)
@@ -20,7 +20,7 @@ void yyerror(const char *s);
 
 #define YYSTYPE void*
 
-muast::TranslationUnit *topnode = nullptr;
+mu::ast::TranslationUnit *topnode = nullptr;
 %}
 
 %token VAR FUNCTION

@@ -15,7 +15,8 @@
 
 #include "llvm/Support/raw_ostream.h"
 
-namespace muast {
+namespace mu {
+namespace ast {
 namespace enums {
 
 enum class ASTNodeType {
@@ -321,6 +322,7 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, StatementType v) {
 }
 
 } // namespace enums
-} // namespace muast
+} // namespace ast
+} // namespace mu
 
 #endif // _ASTENUMS_H_

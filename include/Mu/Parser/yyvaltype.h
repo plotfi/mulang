@@ -1,9 +1,11 @@
 #ifndef YYVALTYPE
 #define YYVALTYPE
 
-#include "Mu/Parser/ast.h"
+#include <string>
+#include "Mu/Support/µt8.h"
 
-namespace muast {
+namespace mu {
+namespace ast {
 
 struct YYValType {
   YYValType(unsigned linenum, std::string value, std::string tokText)
@@ -16,6 +18,7 @@ struct YYValType {
 Ref<YYValType> makeYYValType(unsigned linenum, Ref<char> value, Ref<char> token);
 fv clearYYValStorage();
 
-} // namespace muast
+} // namespace ast
+} // namespace mu
 
 #endif

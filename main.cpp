@@ -39,8 +39,8 @@
 using namespace mlir::mu;
 namespace cl = llvm::cl;
 
-std::optional<Ref<muast::ASTNodeTracker>> muast::ASTNodeTracker::instance;
-const unsigned muast::ASTNode::static_magic_number = 0xdeadbeef;
+std::optional<Ref<mu::ast::ASTNodeTracker>> mu::ast::ASTNodeTracker::instance;
+const unsigned mu::ast::ASTNode::static_magic_number = 0xdeadbeef;
 
 static cl::opt<std::string> inputFilename(cl::Positional,
                                           cl::desc("<input mu file>"),
@@ -55,7 +55,7 @@ extern FILE *yyin;
 extern int yydebug;
 #endif
 
-extern muast::TranslationUnit *topnode;
+extern mu::ast::TranslationUnit *topnode;
 
 //===----------------------------------------------------------------------===//
 /// Returns a Mu AST resulting from parsing the file or a nullptr on error.
@@ -72,7 +72,7 @@ fv bisonReset() {
 }
 
 fn parseInputFile(llvm::StringRef filename)
-    -> std::unique_ptr<muast::TranslationUnit> {
+    -> std::unique_ptr<mu::ast::TranslationUnit> {
   bisonReset();
 
   // Sure wish this was C23
@@ -90,7 +90,7 @@ fn parseInputFile(llvm::StringRef filename)
   yyparse();
 
   assert(topnode != nullptr && "Expected non-null topnode");
-  return std::unique_ptr<muast::TranslationUnit>(topnode);
+  return std::unique_ptr<mu::ast::TranslationUnit>(topnode);
 }
 
 enum InputType { Mu, MLIR };
@@ -107,7 +107,7 @@ cl::opt<enum Action> emitAction(
     cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
     cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")));
 
-fn dumpMLIR()->int {
+fn dumpMLIR() -> int {
   mlir::MLIRContext context;
   // Load our Dialect in this MLIR Context.
   context.getOrLoadDialect<mlir::mu::MuDialect>();
@@ -118,8 +118,11 @@ fn dumpMLIR()->int {
     auto moduleAST = parseInputFile(inputFilename);
     if (!moduleAST)
       return 6;
-    mlir::OwningOpRef<mlir::ModuleOp> module =
-        nullptr; // mlirGen(context, *moduleAST);
+    mlir::OwningOpRef<mlir::ModuleOp> module = nullptr;
+    // TODO: Get mlirGen building
+    #if 0
+    mlir::OwningOpRef<mlir::ModuleOp> module = mlirGen(context, *moduleAST);
+    #endif
     if (!module)
       return 1;
 
@@ -161,7 +164,8 @@ fn dumpAST() -> int {
 
   // dump(*moduleAST);
   moduleAST->dump();
-  llvm::errs() << "Tracked Node Count: " << muast::ASTNodeTracker::get().size()
+  llvm::errs() << "Tracked Node Count: "
+               << mu::ast::ASTNodeTracker::get().size()
                << "\n";
 
   return 0;
@@ -191,5 +195,5 @@ fn main(int argc, char **argv)->int {
     return -1;
   }
 
-  muast::ASTNodeTracker::destroy();
+  mu::ast::ASTNodeTracker::destroy();
 }
