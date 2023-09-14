@@ -111,6 +111,12 @@ fn checked_ptr_cast(MutableRef<void> ptr) -> MutableRef<T> {
   return casted;
 }
 
+struct Location {
+  std::string file = "main"; // Everything in one file for now: "main"
+  unsigned line = 0;         // line number
+  unsigned col = 0;          // column number
+};
+
 struct ASTNode {
   static const unsigned static_magic_number;
   ASTNode(): tracker(ASTNodeTracker::get()) {
@@ -137,16 +143,16 @@ struct ASTNode {
 
   fv dumpNodeInfo() const {
     astout << " (ASTNode id: " << id;
-    if (lineNumber > 0) {
-      astout << ", lineNumber: " << lineNumber;
+    if (location.line > 0) {
+      astout << ", lineNumber: " << location.line;
     }
     astout << ") ";
   }
 
   fv virtual dump(unsigned indent = 0) const = 0;
   fn getID() const -> unsigned { return id; }
-  fn getLineNumber() const -> unsigned { return lineNumber; }
-  fv setLineNumber(uint lineNumber) { this->lineNumber = lineNumber; }
+  fn getLocation() const -> CxxRef<Location> { return location; }
+  fv setLineNumber(unsigned lineNumber) { location.line = lineNumber; }
   fn virtual getKind() const -> ASTNodeType = 0;
   fn check() const -> bool {
     return magic_number == ASTNode::static_magic_number;
@@ -155,7 +161,7 @@ struct ASTNode {
 private:
   const ASTNodeTracker &tracker;
   uint id = 0;
-  uint lineNumber = 0;
+  muast::Location location;
   const unsigned magic_number = ASTNode::static_magic_number;
 };
 

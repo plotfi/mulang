@@ -84,7 +84,7 @@ parameter_list
   : parameter_declaration {
     $$ = new ParamList(checked_ptr_cast<ParamDecl>($1));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
-        checked_ptr_cast<ParamDecl>($1)->getLineNumber());
+        checked_ptr_cast<ParamDecl>($1)->getLocation().line);
   }
   | parameter_list ',' parameter_declaration {
     $$ = checked_ptr_cast<ParamList>($1)->append(
