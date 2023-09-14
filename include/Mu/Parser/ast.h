@@ -147,7 +147,7 @@ struct ASTNode {
   fn getID() const -> unsigned { return id; }
   fn getLineNumber() const -> unsigned { return lineNumber; }
   fv setLineNumber(uint lineNumber) { this->lineNumber = lineNumber; }
-  fn virtual type() const -> ASTNodeType = 0;
+  fn virtual getKind() const -> ASTNodeType = 0;
   fn check() const -> bool {
     return magic_number == ASTNode::static_magic_number;
   }
@@ -165,7 +165,7 @@ fv inline dumpASTNodeType(Ref<ASTNode> node) {
   llvm::errs() << "ASTNode dump with ID "
                << node->getID()
                << ": "
-               << node->type();
+               << node->getKind();
 }
 
 template <typename T, unsigned newlines = 0, bool printAsList = true>
@@ -197,7 +197,7 @@ struct ASTList : public ASTNode {
       astout << "\n";
       for (unsigned i = 0; i < indent; i++)
         astout << indentStr;
-      astout << "(" << type() << " ";
+      astout << "(" << getKind() << " ";
       this->dumpNodeInfo();
     }
 
@@ -220,12 +220,12 @@ struct ASTList : public ASTNode {
     }
   }
 
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::ASTNodeList;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::ASTNodeList;
+    return node->getKind() == ASTNodeType::ASTNodeList;
   }
 
 private:
@@ -238,7 +238,7 @@ struct Expression : public ASTNode {
   // Expression &operator=(const Expression &) = delete;
   // Expression &operator=(Expression &&) = delete;
   virtual ~Expression() {}
-  fn virtual getExpressionType() const -> ExpressionType = 0;
+  fn virtual getExpressionKind() const -> ExpressionType = 0;
   fv virtual dumpInternal(unsigned indent = 0) const = 0;
   fv virtual dump(unsigned indent = 0) const override {
     astout << '\n';
@@ -248,8 +248,8 @@ struct Expression : public ASTNode {
            << "\033[31m"
            << "expression type: "
            << "\033[0m"
-           << getExpressionType();
-    astout << " " << type() << " ";
+           << getExpressionKind();
+    astout << " " << getKind() << " ";
     this->dumpNodeInfo();
     this->dumpInternal(indent + 1);
     astout << ")";
@@ -264,22 +264,22 @@ struct UnaryExpression : public Expression {
   UnaryExpression(UnaryOp op, std::unique_ptr<Expression> innerExpr)
       : op(op), innerExpr(std::move(innerExpr)) {}
   virtual ~UnaryExpression() {}
-  fn virtual getExpressionType() const -> ExpressionType override {
+  fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::Unary;
   }
 
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << type() << " " << op;
+    astout << "(" << getKind() << " " << op;
     innerExpr->dump(indent + 1);
     astout << " )";
   }
 
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::UnaryExpr;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::UnaryExpr;
+    return node->getKind() == ASTNodeType::UnaryExpr;
   }
 
 private:
@@ -299,23 +299,23 @@ struct BinaryExpression : public Expression {
     delete leftExpr;
     delete rightExpr;
   }
-  fn virtual getExpressionType() const -> ExpressionType override {
+  fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::Binary;
   }
 
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << type() << "op: " << op << " ";
+    astout << "(" << getKind() << "op: " << op << " ";
     leftExpr->dump(indent + 1);
     rightExpr->dump(indent + 1);
     astout << ")";
   }
 
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::BinaryExpr;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::BinaryExpr;
+    return node->getKind() == ASTNodeType::BinaryExpr;
   }
 
 private:
@@ -332,19 +332,19 @@ struct IdentifierExpression : public Expression {
   IdentifierExpression &operator=(IdentifierExpression &&) = delete;
   IdentifierExpression(std::string name) : name(name) {}
   virtual ~IdentifierExpression() {}
-  fn virtual getExpressionType() const -> ExpressionType override {
+  fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::Identifier;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << type() << "name: " << name << " )";
+    astout << "(" << getKind() << "name: " << name << " )";
   }
 
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::IdentifierExpr;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::IdentifierExpr;
+    return node->getKind() == ASTNodeType::IdentifierExpr;
   }
 
 private:
@@ -361,18 +361,18 @@ struct ConstantExpression : public Expression {
   ConstantExpression &operator=(ConstantExpression &&) = delete;
   ConstantExpression(std::string constant) : constant(constant) {}
   virtual ~ConstantExpression() {}
-  fn virtual getExpressionType() const -> ExpressionType override {
+  fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::Constant;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << type() << constant << " )";
+    astout << "(" << getKind() << constant << " )";
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::ConstantExpr;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::ConstantExpr;
+    return node->getKind() == ASTNodeType::ConstantExpr;
   }
 
 private:
@@ -385,15 +385,15 @@ struct StringLiteralExpression : public Expression {
   StringLiteralExpression &operator=(const StringLiteralExpression &) = delete;
   StringLiteralExpression &operator=(StringLiteralExpression &&) = delete;
   virtual ~StringLiteralExpression() {}
-  fn virtual getExpressionType() const -> ExpressionType override {
+  fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::StringLiteral;
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::StringLiteralExpr;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::StringLiteralExpr;
+    return node->getKind() == ASTNodeType::StringLiteralExpr;
   }
 };
 
@@ -410,22 +410,22 @@ struct CallExpression : public Expression {
       : name(name), exprList(std::move(exprList)) {}
   virtual ~CallExpression() {}
 
-  fn virtual getExpressionType() const->ExpressionType override {
+  fn virtual getExpressionKind() const->ExpressionType override {
     return ExpressionType::Call;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << type() << " " << name << " )";
+    astout << "(" << getKind() << " " << name << " )";
     if (exprList.has_value()) {
       exprList.value()->dump(indent);
     }
     astout << ")";
   }
-  fn virtual type() const->ASTNodeType override {
+  fn virtual getKind() const->ASTNodeType override {
     return ASTNodeType::CallExpr;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::CallExpr;
+    return node->getKind() == ASTNodeType::CallExpr;
   }
 
 private:
@@ -442,20 +442,20 @@ struct ParenthesisExpression : public Expression {
       : innerExpr(std::move(innerExpr)) {}
   virtual ~ParenthesisExpression() {}
 
-  fn virtual getExpressionType() const -> ExpressionType override {
+  fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::Parenthesis;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << type() << " ";
+    astout << "(" << getKind() << " ";
     innerExpr->dump(indent + 1);
     astout << " )";
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::ParenthesisExpr;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::ParenthesisExpr;
+    return node->getKind() == ASTNodeType::ParenthesisExpr;
   }
 
 private:
@@ -470,14 +470,14 @@ struct Statement : public ASTNode {
   virtual ~Statement() {}
   fn virtual hasExpression() const -> bool = 0;
   fn virtual getExpression() const -> Ref<Expression> = 0;
-  fn virtual getStatementType() const -> StatementType = 0;
+  fn virtual getStatementKind() const -> StatementType = 0;
   fv virtual dumpInternal(unsigned indent = 0) const = 0;
   fv virtual dump(unsigned indent = 0) const override {
     astout << '\n';
     for (unsigned i = 0; i < indent; i++)
       astout << indentStr;
-    astout << "(statement type: " << getStatementType();
-    astout << " " << type() << " ";
+    astout << "(statement type: " << getStatementKind();
+    astout << " " << getKind() << " ";
     this->dumpNodeInfo();
     this->dumpInternal(indent + 1);
     fflush(stdout);
@@ -504,7 +504,7 @@ struct CompoundStatement : public Statement {
     assert(false && "Statement can not have an expresson.");
     exit(EXIT_FAILURE);
   }
-  fn virtual getStatementType() const -> StatementType override {
+  fn virtual getStatementKind() const -> StatementType override {
     return StatementType::Compound;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -512,12 +512,12 @@ struct CompoundStatement : public Statement {
       return;
     statements.value()->dump(indent + 1);
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::CompoundStat;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::CompoundStat;
+    return node->getKind() == ASTNodeType::CompoundStat;
   }
 
 private:
@@ -546,7 +546,7 @@ struct SelectionIfStatement : public Statement {
 
   fn virtual hasExpression() const -> bool override { return true; }
   fn virtual getExpression() const -> Ref<Expression> override { return expr; }
-  fn virtual getStatementType() const -> StatementType override {
+  fn virtual getStatementKind() const -> StatementType override {
     return StatementType::SelectionIf;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -558,12 +558,12 @@ struct SelectionIfStatement : public Statement {
       elseBranch.value()->dump(indent + 1);
     }
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::SelectIfStat;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::SelectIfStat;
+    return node->getKind() == ASTNodeType::SelectIfStat;
   }
 
 private:
@@ -586,7 +586,7 @@ struct IterationWhileStatement : public Statement {
 
   fn virtual hasExpression() const -> bool override { return true; }
   fn virtual getExpression() const -> Ref<Expression> override { return expr; }
-  fn virtual getStatementType() const -> StatementType override {
+  fn virtual getStatementKind() const -> StatementType override {
     return StatementType::IterationWhile;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
@@ -594,12 +594,12 @@ struct IterationWhileStatement : public Statement {
       body->dump(indent + 1);
     }
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::IterationWhileStat;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::IterationWhileStat;
+    return node->getKind() == ASTNodeType::IterationWhileStat;
   }
 
 private:
@@ -620,16 +620,16 @@ struct JumpReturnStatement : public Statement {
 
   fn virtual hasExpression() const -> bool override { return true; }
   fn virtual getExpression() const -> Ref<Expression> override { return expr; }
-  fn virtual getStatementType() const -> StatementType override {
+  fn virtual getStatementKind() const -> StatementType override {
     return StatementType::JumpReturn;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {}
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::JumpReturnStat;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::JumpReturnStat;
+    return node->getKind() == ASTNodeType::JumpReturnStat;
   }
 
 private:
@@ -650,18 +650,18 @@ struct AssignmentStatement : public Statement {
 
   fn virtual hasExpression() const -> bool override { return true; }
   fn virtual getExpression() const -> Ref<Expression> override { return expr; }
-  fn virtual getStatementType() const -> StatementType override {
+  fn virtual getStatementKind() const -> StatementType override {
     return StatementType::Assignment;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
     astout << " name: " << name;
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::AssignmentStat;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::AssignmentStat;
+    return node->getKind() == ASTNodeType::AssignmentStat;
   }
 
 private:
@@ -682,18 +682,18 @@ struct InitializationStatement : public Statement {
 
   fn virtual hasExpression() const -> bool override { return true; }
   fn virtual getExpression() const -> Ref<Expression> override { return expr; }
-  fn virtual getStatementType() const -> StatementType override {
+  fn virtual getStatementKind() const -> StatementType override {
     return StatementType::Initialization;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
     astout << " name: " << name << ", varType: " << varType;
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::InitializationStat;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::InitializationStat;
+    return node->getKind() == ASTNodeType::InitializationStat;
   }
 
 private:
@@ -712,20 +712,20 @@ struct ParamDecl : public ASTNode {
   virtual ~ParamDecl(){};
   fv virtual dump(unsigned indent = 0) const override {
     astout << "(parameter ";
-    astout << "" << type() << " ";
+    astout << "" << getKind() << " ";
     astout << "name: " << name << ", ";
     astout << "varType: " << varType << " ),";
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::ParamDecl;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::ParamDecl;
+    return node->getKind() == ASTNodeType::ParamDecl;
   }
 
   fn getName() -> std::string { return name; }
-  fn getVarType() -> Type { return varType; }
+  fn getVargetKind() -> Type { return varType; }
 
 private:
   std::string name;
@@ -752,7 +752,7 @@ struct Defun : public ASTNode {
 
   fv virtual dump(unsigned indent = 0) const override {
     astout << "(defun name: " << name << ", type: " << returnType;
-    astout << " " << type() << " ";
+    astout << " " << getKind() << " ";
     this->dumpNodeInfo();
     if (params.has_value()) {
       params.value()->dump(indent + 1);
@@ -760,16 +760,16 @@ struct Defun : public ASTNode {
     body->dump(indent + 1);
     astout << ")";
   }
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::DefunDecl;
   }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::DefunDecl;
+    return node->getKind() == ASTNodeType::DefunDecl;
   }
 
   fn getName() -> std::string { return name; }
-  fn getReturnType() -> Type { return returnType; }
+  fn getReturngetKind() -> Type { return returnType; }
   fn getBody() -> CxxRef<CompoundStatement> { return *body.get(); }
   fn hasParams() -> bool { return params.has_value(); }
   fn getParams() -> CxxRef<ParamList> {
@@ -802,7 +802,7 @@ struct TranslationUnit : public ASTNode {
     functions->dump();
   };
 
-  fn virtual type() const -> ASTNodeType override {
+  fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::TranslationUnit;
   }
 
@@ -810,7 +810,7 @@ struct TranslationUnit : public ASTNode {
   auto end() { return functions->end(); }
 
   static bool classof(const ASTNode *node) {
-    return node->type() == ASTNodeType::TranslationUnit;
+    return node->getKind() == ASTNodeType::TranslationUnit;
   }
 
 private:
