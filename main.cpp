@@ -26,7 +26,6 @@
 #include "mlir/IR/AsmState.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
-#include "mlir/IR/Verifier.h"
 #include "mlir/Parser/Parser.h"
 
 #include "llvm/ADT/StringRef.h"
@@ -77,10 +76,13 @@ fn parseInputFile(llvm::StringRef filename)
   bisonReset();
 
   // Sure wish this was C23
-  Defer<decltype(yyin)> D1{yyin = fopen(filename.data(), "r"), [](auto f) {
-                             fclose(f);
-                             bisonReset();
-                           }};
+  Defer<decltype(yyin)> D {
+    yyin = fopen(filename.data(), "r"),
+    [](auto f) {
+      fclose(f);
+      bisonReset();
+    }
+  };
 
   // Bison is gross, especially GNU Bison 2.3 on macOS where global yyin is the
   // input to yyparse()

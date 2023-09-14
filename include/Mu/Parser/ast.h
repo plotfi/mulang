@@ -224,6 +224,10 @@ struct ASTList : public ASTNode {
     return ASTNodeType::ASTNodeList;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::ASTNodeList;
+  }
+
 private:
   VectorRef<T> things;
 };
@@ -274,6 +278,10 @@ struct UnaryExpression : public Expression {
     return ASTNodeType::UnaryExpr;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::UnaryExpr;
+  }
+
 private:
   UnaryOp op;
   std::unique_ptr<Expression> innerExpr;
@@ -306,6 +314,10 @@ struct BinaryExpression : public Expression {
     return ASTNodeType::BinaryExpr;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::BinaryExpr;
+  }
+
 private:
   BinaryOp op;
   Ref<Expression> leftExpr;
@@ -331,6 +343,10 @@ struct IdentifierExpression : public Expression {
     return ASTNodeType::IdentifierExpr;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::IdentifierExpr;
+  }
+
 private:
   std::string name;
 };
@@ -352,7 +368,11 @@ struct ConstantExpression : public Expression {
     astout << "(" << type() << constant << " )";
   }
   fn virtual type() const -> ASTNodeType override {
-    return ASTNodeType::IdentifierExpr;
+    return ASTNodeType::ConstantExpr;
+  }
+
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::ConstantExpr;
   }
 
 private:
@@ -370,6 +390,10 @@ struct StringLiteralExpression : public Expression {
   }
   fn virtual type() const -> ASTNodeType override {
     return ASTNodeType::StringLiteralExpr;
+  }
+
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::StringLiteralExpr;
   }
 };
 
@@ -400,6 +424,10 @@ struct CallExpression : public Expression {
     return ASTNodeType::CallExpr;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::CallExpr;
+  }
+
 private:
   std::string name = "";
   OptionalOwnedRef<ExpressionList> exprList;
@@ -424,6 +452,10 @@ struct ParenthesisExpression : public Expression {
   }
   fn virtual type() const -> ASTNodeType override {
     return ASTNodeType::ParenthesisExpr;
+  }
+
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::ParenthesisExpr;
   }
 
 private:
@@ -484,6 +516,10 @@ struct CompoundStatement : public Statement {
     return ASTNodeType::CompoundStat;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::CompoundStat;
+  }
+
 private:
   OptionalOwnedRef<StatementList> statements;
 };
@@ -526,6 +562,10 @@ struct SelectionIfStatement : public Statement {
     return ASTNodeType::SelectIfStat;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::SelectIfStat;
+  }
+
 private:
   Ref<Expression> expr;
   Ref<CompoundStatement> ifBranch;
@@ -558,6 +598,10 @@ struct IterationWhileStatement : public Statement {
     return ASTNodeType::IterationWhileStat;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::IterationWhileStat;
+  }
+
 private:
   Ref<Expression> expr;
   Ref<CompoundStatement> body;
@@ -582,6 +626,10 @@ struct JumpReturnStatement : public Statement {
   fv virtual dumpInternal(unsigned indent = 0) const override {}
   fn virtual type() const -> ASTNodeType override {
     return ASTNodeType::JumpReturnStat;
+  }
+
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::JumpReturnStat;
   }
 
 private:
@@ -612,6 +660,10 @@ struct AssignmentStatement : public Statement {
     return ASTNodeType::AssignmentStat;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::AssignmentStat;
+  }
+
 private:
   Ref<Expression> expr;
   std::string name;
@@ -640,6 +692,10 @@ struct InitializationStatement : public Statement {
     return ASTNodeType::InitializationStat;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::InitializationStat;
+  }
+
 private:
   Ref<Expression> expr;
   std::string name;
@@ -663,6 +719,13 @@ struct ParamDecl : public ASTNode {
   fn virtual type() const -> ASTNodeType override {
     return ASTNodeType::ParamDecl;
   }
+
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::ParamDecl;
+  }
+
+  fn getName() -> std::string { return name; }
+  fn getVarType() -> Type { return varType; }
 
 private:
   std::string name;
@@ -701,6 +764,22 @@ struct Defun : public ASTNode {
     return ASTNodeType::DefunDecl;
   }
 
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::DefunDecl;
+  }
+
+  fn getName() -> std::string { return name; }
+  fn getReturnType() -> Type { return returnType; }
+  fn getBody() -> CxxRef<CompoundStatement> { return *body.get(); }
+  fn hasParams() -> bool { return params.has_value(); }
+  fn getParams() -> CxxRef<ParamList> {
+    if (!params.has_value()) {
+      assert(false && "expected has value");
+      exit(EXIT_FAILURE);
+    }
+    return *params.value().get();
+  }
+
 private:
   std::string name = "";
   OptionalOwnedRef<ParamList> params;
@@ -729,6 +808,10 @@ struct TranslationUnit : public ASTNode {
 
   auto begin() { return functions->begin(); }
   auto end() { return functions->end(); }
+
+  static bool classof(const ASTNode *node) {
+    return node->type() == ASTNodeType::TranslationUnit;
+  }
 
 private:
   std::string name = "main";

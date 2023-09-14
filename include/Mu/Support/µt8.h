@@ -6,6 +6,7 @@
 #define _MUTATE_H_
 
 #include <memory>
+#include <type_traits>
 #include <vector>
 #include <optional>
 
@@ -16,21 +17,31 @@
 #define var auto
 typealias uint = unsigned;
 template <typename T> using Ref = const T *_Nonnull;
+template <typename T> using CxxRef = const T &;
 template <typename T> using MutableRef = T *_Nonnull;
 template <typename T> using VectorRef = std::vector<Ref<T>>;
 template <typename T> using OptionalRef = std::optional<Ref<T>>;
 template <typename T> using OptionalOwnedRef =
   std::optional<std::unique_ptr<T>>;
 
-template <typename T>
+template <typename T = int>
 struct Defer {
   Defer() = delete;
   Defer(T t, std::function<void(T t)> cleanup): t(t), cleanup(cleanup) {}
-  Defer(std::function<void(T t)> cleanup): cleanup(cleanup) {}
-  virtual ~Defer() { cleanup(t); }
+  Defer(std::function<void()> cleanup): cleanup2(cleanup) {}
+  virtual ~Defer() {
+    if (cleanup.has_value()) {
+      cleanup.value()(t);
+    }
+    if (cleanup2.has_value()) {
+      cleanup2.value()();
+    }
+  }
+
 private:
   T t;
-  std::function<void(T t)> cleanup;
+  std::optional<std::function<void(T t)>> cleanup;
+  std::optional<std::function<void()>> cleanup2;
 };
 
 #endif // _MUTATE_H_
