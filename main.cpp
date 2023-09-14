@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "Mu/Parser/ast.h"
+#include "Mu/MuMLIRGen.h"
 
 #include "Mu/Support/µt8.h"
 #include "mlir/IR/AsmState.h"
@@ -118,11 +119,7 @@ fn dumpMLIR() -> int {
     auto moduleAST = parseInputFile(inputFilename);
     if (!moduleAST)
       return 6;
-    mlir::OwningOpRef<mlir::ModuleOp> module = nullptr;
-    // TODO: Get mlirGen building
-    #if 0
-    mlir::OwningOpRef<mlir::ModuleOp> module = mlirGen(context, *moduleAST);
-    #endif
+    mlir::OwningOpRef<mlir::ModuleOp> module = mu::mlirGen(context, *moduleAST);
     if (!module)
       return 1;
 

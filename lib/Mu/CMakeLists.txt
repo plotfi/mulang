@@ -3,6 +3,7 @@ add_mlir_dialect_library(MLIRMu
         MuDialect.cpp
         MuOps.cpp
         MuPasses.cpp
+        MuMLIRGen.cpp
 
         ADDITIONAL_HEADER_DIRS
         ${PROJECT_SOURCE_DIR}/include/Mu

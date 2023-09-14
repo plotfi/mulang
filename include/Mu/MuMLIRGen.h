@@ -14,7 +14,6 @@
 #ifndef MU_MLIRGEN_H
 #define MU_MLIRGEN_H
 
-#include "Mu/Parser/ast.h"
 #include <memory>
 
 namespace mlir {
@@ -25,6 +24,10 @@ class ModuleOp;
 } // namespace mlir
 
 namespace mu {
+namespace ast {
+struct TranslationUnit;
+} // namespace ast
+
 /// Emit IR for the given Mu TranslationUnit AST, returns a newly created MLIR
 /// module or nullptr on failure.
 mlir::OwningOpRef<mlir::ModuleOp> mlirGen(mlir::MLIRContext &context,
