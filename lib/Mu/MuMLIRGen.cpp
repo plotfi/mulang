@@ -12,11 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mu/MuOps.h"
+#include "Mu/Parser/astenums.h"
 #include "mlir/IR/Attributes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/MLIRContext.h"
+#include "mlir/IR/Types.h"
 #include "mlir/IR/Verifier.h"
 
 #include "llvm/ADT/STLExtras.h"
@@ -105,21 +107,29 @@ private:
   }
   #endif
 
+  [[nodiscard]] auto getType(const mu::ast::enums::Type &type) -> mlir::Type {
+    return builder.getI32Type();
+  }
+
   /// Create the prototype for an MLIR function with as many arguments as the
   /// provided Mu AST prototype.
-  #if 0
-  mlir::mu::FuncOp mlirGen(PrototypeAST &proto) {
- auto location = loc(proto.loc());
+  mlir::mu::FuncOp mlirGenFunctionProto(const mu::ast::Defun &funcAST) {
+    auto location = loc(funcAST.getLocation());
 
     // This is a generic function, the return type will be inferred later.
     // Arguments type are uniformly unranked tensors.
-    llvm::SmallVector<mlir::Type, 4> argTypes(proto.getArgs().size(),
-                                              getType(VarType{}));
+
+    llvm::SmallVector<mlir::Type, 4> argTypes;
+    if (funcAST.hasParams()) {
+      for (const auto *param : funcAST.getParams()) {
+        argTypes.push_back(getType(param->getType()));
+      }
+    }
+
     auto funcType = builder.getFunctionType(argTypes, std::nullopt);
-    return builder.create<mlir::mu::FuncOp>(location, proto.getName(),
-                                             funcType);
+    return builder.create<mlir::mu::FuncOp>(location, funcAST.getName(),
+                                            funcType);
   }
-  #endif
 
   /// Emit a new function and add it to the MLIR module.
   mlir::mu::FuncOp mlirGen(const mu::ast::Defun &funcAST) {
@@ -128,17 +138,7 @@ private:
 
     // Create an MLIR function for the given prototype.
     builder.setInsertionPointToEnd(theModule.getBody());
-    mlir::mu::FuncOp function;
-    {
-      auto location = loc(funcAST.getLocation());
-
-      // This is a generic function, the return type will be inferred later.
-      // Arguments type are uniformly unranked tensors.
-      llvm::SmallVector<mlir::Type, 4> argTypes;
-      auto funcType = builder.getFunctionType(argTypes, std::nullopt);
-      function = builder.create<mlir::mu::FuncOp>(location, funcAST.getName(),
-                                                  funcType);
-    }
+    mlir::mu::FuncOp function = mlirGenFunctionProto(funcAST);
     if (!function)
       return nullptr;
 

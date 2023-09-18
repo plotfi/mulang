@@ -740,8 +740,8 @@ struct ParamDecl : public ASTNode {
     return node->getKind() == ASTNodeType::ParamDecl;
   }
 
-  fn getName() -> std::string { return name; }
-  fn getVargetKind() -> Type { return varType; }
+  fn getName() const -> std::string { return name; }
+  fn getType() const -> Type { return varType; }
 
 private:
   std::string name;
@@ -785,7 +785,7 @@ struct Defun : public ASTNode {
   }
 
   fn getName() const -> std::string { return name; }
-  fn getReturngetKind() const -> Type { return returnType; }
+  fn getReturnType() const -> Type { return returnType; }
   fn getBody() const -> CxxRef<CompoundStatement> { return *body.get(); }
   fn hasParams() const -> bool { return params.has_value(); }
   fn getParams() const -> CxxRef<ParamList> {
