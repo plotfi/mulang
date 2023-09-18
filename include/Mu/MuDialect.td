@@ -35,6 +35,11 @@ def Mu_Dialect : Dialect {
 // Base mu operation definition.
 //===----------------------------------------------------------------------===//
 
+// Base class for mu dialect operations. This operation inherits from the base
+// `Op` class in OpBase.td, and provides:
+//   * The parent dialect of the operation.
+//   * The mnemonic for the operation, or the name without the dialect prefix.
+//   * A list of traits for the operation.
 class Mu_Op<string mnemonic, list<Trait> traits = []> :
         Op<Mu_Dialect, mnemonic, traits>;
 

@@ -1,6 +1,11 @@
 
 // type int = int32;
 
+
+fn bar2(a: int32) -> int32 {
+  return 42 + a;
+}
+
 fn bar(a: int32) -> int32 {
   return 42 + a;
 }

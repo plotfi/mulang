@@ -44,4 +44,6 @@ private:
   std::optional<std::function<void()>> cleanup2;
 };
 
+#define NDEBUG
+
 #endif // _MUTATE_H_

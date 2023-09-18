@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Mu/MuOps.h"
 #include "mlir/IR/Attributes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
@@ -23,8 +24,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include <numeric>
 
-#include "Mu/MuMLIRGen.h"
 #include "Mu/MuDialect.h"
+#include "Mu/MuMLIRGen.h"
 #include "Mu/Parser/ast.h"
 
 using namespace mlir::mu;
@@ -57,8 +58,7 @@ struct MLIRGenImpl {
     theModule = mlir::ModuleOp::create(builder.getUnknownLoc());
 
     for (const mu::ast::Defun *f : moduleAST) {
-      // TODO
-      // mlirGen(*f);
+      mlirGen(*f);
     }
 
     // Verify the module after we have finished constructing it, this will check
@@ -109,7 +109,7 @@ private:
   /// provided Mu AST prototype.
   #if 0
   mlir::mu::FuncOp mlirGen(PrototypeAST &proto) {
-    auto location = loc(proto.loc());
+ auto location = loc(proto.loc());
 
     // This is a generic function, the return type will be inferred later.
     // Arguments type are uniformly unranked tensors.
@@ -121,25 +121,32 @@ private:
   }
   #endif
 
-  #if 0
   /// Emit a new function and add it to the MLIR module.
   mlir::mu::FuncOp mlirGen(const mu::ast::Defun &funcAST) {
     // Create a scope in the symbol table to hold variable declarations.
     ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
-    return 0;
-
-    #if 0
     // Create an MLIR function for the given prototype.
     builder.setInsertionPointToEnd(theModule.getBody());
-    mlir::mu::FuncOp function = mlirGen(*funcAST.getProto());
+    mlir::mu::FuncOp function;
+    {
+      auto location = loc(funcAST.getLocation());
+
+      // This is a generic function, the return type will be inferred later.
+      // Arguments type are uniformly unranked tensors.
+      llvm::SmallVector<mlir::Type, 4> argTypes;
+      auto funcType = builder.getFunctionType(argTypes, std::nullopt);
+      function = builder.create<mlir::mu::FuncOp>(location, funcAST.getName(),
+                                                  funcType);
+    }
     if (!function)
       return nullptr;
 
     // Let's start the body of the function now!
     mlir::Block &entryBlock = function.front();
-    auto protoArgs = funcAST.getProto()->getArgs();
 
+    #if 0
+    auto protoArgs = funcAST.getProto()->getArgs();
     // Declare all the function arguments in the symbol table.
     for (const auto nameValue :
          llvm::zip(protoArgs, entryBlock.getArguments())) {
@@ -147,18 +154,24 @@ private:
                          std::get<1>(nameValue))))
         return nullptr;
     }
+    #endif
 
     // Set the insertion point in the builder to the beginning of the function
     // body, it will be used throughout the codegen to create operations in this
     // function.
     builder.setInsertionPointToStart(&entryBlock);
 
+    #if 0
     // Emit the body of the function.
-    if (mlir::failed(mlirGen(*funcAST.getBody()))) {
+    if (mlir::failed(mlirGen(funcAST.getBody()))) {
       function.erase();
       return nullptr;
     }
+    #endif
 
+    builder.create<ReturnOp>(loc(funcAST.getLocation()));
+
+    #if 0
     // Implicitly return void if no return statement was emitted.
     // FIXME: we may fix the parser instead to always return the last expression
     // (this would possibly help the REPL case later)
@@ -173,11 +186,10 @@ private:
       function.setType(builder.getFunctionType(
           function.getFunctionType().getInputs(), getType(VarType{})));
     }
+    #endif
 
     return function;
-    #endif
   }
-  #endif
 
   #if 0
   /// Emit a binary operation

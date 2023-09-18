@@ -59,6 +59,7 @@ struct ASTNodeTracker {
   }
 
   fv static destroy() {
+    #ifndef NDEBUG
     if (instance.has_value() && instance.value()->hasTrackedNodes()) {
       astout << "Dumping Tracked Nodes:\n";
       for (unsigned i = 0; i < instance.value()->tracked.size(); i++) {
@@ -71,6 +72,7 @@ struct ASTNodeTracker {
         }
       }
     }
+    #endif
     assert(instance && !instance.value()->hasTrackedNodes() &&
            "Expected all nodes to be untracked by dtors");
     delete instance.value();
@@ -122,16 +124,16 @@ struct Location {
 struct ASTNode {
   static const unsigned static_magic_number;
   ASTNode(): tracker(ASTNodeTracker::get()) {
-    id = tracker.size();
-    astout << "Previous Node: ";
-    if (id) {
-      tracker.dumpNodeByID(id - 1);
-    }
-    astout << "\n";
+    this->id = tracker.size();
+    tracker.track(this);
+    // astout << "Previous Node: ";
+    // if (id) {
+    //   tracker.dumpNodeByID(id - 1);
+    // }
+    // astout << "\n";
     // assert(id != 26 && "blow up ASTNode for debug");
     // assert(id != 102 && "blow up ASTNode for debug");
-    astout << "create base ASTNode with id: " << id << " !!!\n";
-    tracker.track(this);
+    // astout << "create base ASTNode with id: " << id << " !!!\n";
   }
   // explicit ASTNode(const ASTNodeTracker &tracker) : tracker(tracker) {}
   ASTNode(const ASTNode &) = default;
@@ -139,7 +141,9 @@ struct ASTNode {
   ASTNode &operator=(const ASTNode &) = delete;
   ASTNode &operator=(ASTNode &&) = delete;
   virtual ~ASTNode() {
+    #ifndef NDEBUG
     astout << "Untracking ID: " << getID() << "\n";
+    #endif
     tracker.untrack(this);
   }
 
@@ -199,6 +203,8 @@ struct ASTList : public ASTNode {
     things.push_back(t);
     return this;
   }
+
+  fn size() const -> size_t { return things.size(); }
 
   fv virtual dump(unsigned indent = 0) const override {
     if (printAsList) {
@@ -524,6 +530,9 @@ struct CompoundStatement : public Statement {
     return ASTNodeType::CompoundStat;
   }
 
+  auto begin() const { return statements.value()->begin(); }
+  auto end() const { return statements.value()->end(); }
+
   static bool classof(const ASTNode *node) {
     return node->getKind() == ASTNodeType::CompoundStat;
   }
@@ -776,11 +785,11 @@ struct Defun : public ASTNode {
     return node->getKind() == ASTNodeType::DefunDecl;
   }
 
-  fn getName() -> std::string { return name; }
-  fn getReturngetKind() -> Type { return returnType; }
-  fn getBody() -> CxxRef<CompoundStatement> { return *body.get(); }
-  fn hasParams() -> bool { return params.has_value(); }
-  fn getParams() -> CxxRef<ParamList> {
+  fn getName() const -> std::string { return name; }
+  fn getReturngetKind() const -> Type { return returnType; }
+  fn getBody() const -> CxxRef<CompoundStatement> { return *body.get(); }
+  fn hasParams() const -> bool { return params.has_value(); }
+  fn getParams() const -> CxxRef<ParamList> {
     if (!params.has_value()) {
       assert(false && "expected has value");
       exit(EXIT_FAILURE);

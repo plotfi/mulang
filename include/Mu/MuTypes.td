@@ -16,16 +16,20 @@ include "Mu/MuDialect.td"
 // Mu type definitions
 //===----------------------------------------------------------------------===//
 
-class Mu_Type<string name, string typeMnemonic, list<Trait> traits = []>
+class Mu_DummyType<string name, string typeMnemonic, list<Trait> traits = []>
     : TypeDef<Mu_Dialect, name, traits> {
   let mnemonic = typeMnemonic;
 }
 
-def Mu_CustomType : Mu_Type<"Custom", "custom"> {
+def Mu_CustomType : Mu_DummyType<"Custom", "custom"> {
     let summary = "Mu custom type";
     let description = "Custom type in Mu dialect";
     let parameters = (ins StringRefParameter<"the custom value">:$value);
     let assemblyFormat = "`<` $value `>`";
 }
+
+// TODO Hardcoded Mu_Type to I32 for now
+// Provide a definition of the types that are used within the Toy dialect.
+def Mu_Type : AnyTypeOf<[I32]>;
 
 #endif // MU_TYPES

@@ -161,9 +161,11 @@ fn dumpAST() -> int {
 
   // dump(*moduleAST);
   moduleAST->dump();
+
+#ifndef NDEBUG
   llvm::errs() << "Tracked Node Count: "
-               << mu::ast::ASTNodeTracker::get().size()
-               << "\n";
+               << mu::ast::ASTNodeTracker::get().size() << "\n";
+#endif
 
   return 0;
 }

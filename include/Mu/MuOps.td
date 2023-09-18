@@ -10,8 +10,104 @@
 #define MU_OPS
 
 include "Mu/MuTypes.td"
+include "mlir/Interfaces/FunctionInterfaces.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+
+//===----------------------------------------------------------------------===//
+// Mu Operations
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// FuncOp
+//===----------------------------------------------------------------------===//
+
+def FuncOp : Mu_Op<"func", [
+    FunctionOpInterface, IsolatedFromAbove
+  ]> {
+  let summary = "user defined function operation";
+  let description = [{
+    The "mu.func" operation represents a user defined function. These are
+    callable SSA-region operations that contain mu computations.
+
+    Example:
+
+    ```mlir
+    mu.func @main() {
+      %0 = mu.op1 to mutype1
+      %1 = mu.op2 to mutype2
+      mu.print %1 : mutype2
+      mu.return
+    }
+    ```
+  }];
+
+  let arguments = (ins
+    SymbolNameAttr:$sym_name,
+    TypeAttrOf<FunctionType>:$function_type,
+    OptionalAttr<DictArrayAttr>:$arg_attrs,
+    OptionalAttr<DictArrayAttr>:$res_attrs
+  );
+  let regions = (region AnyRegion:$body);
+
+  let builders = [OpBuilder<(ins
+    "StringRef":$name, "FunctionType":$type,
+    CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)
+  >];
+  let extraClassDeclaration = [{
+    //===------------------------------------------------------------------===//
+    // FunctionOpInterface Methods
+    //===------------------------------------------------------------------===//
+
+    /// Returns the argument types of this function.
+    ArrayRef<Type> getArgumentTypes() { return getFunctionType().getInputs(); }
+
+    /// Returns the result types of this function.
+    ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
+
+    Region *getCallableRegion() { return &getBody(); }
+  }];
+  let hasCustomAssemblyFormat = 1;
+  let skipDefaultBuilders = 1;
+}
+
+def ReturnOp : Mu_Op<"return", [Pure, HasParent<"FuncOp">,
+                                 Terminator]> {
+  let summary = "return operation";
+  let description = [{
+    The "return" operation represents a return operation within a function.
+    The operation takes an optional operand and produces no results.
+    The operand type must match the signature of the function that contains
+    the operation. For example:
+
+    ```mlir
+      mu.func @foo() -> sometype {
+        ...
+        mu.return %0 : sometype
+      }
+    ```
+  }];
+
+  // The return operation takes an optional input operand to return. This
+  // value must match the return type of the enclosing function.
+  let arguments = (ins Variadic<Mu_Type>:$input);
+
+  // The return operation only emits the input in the format if it is present.
+  let assemblyFormat = "($input^ `:` type($input))? attr-dict ";
+
+  // Allow building a ReturnOp with no return operand.
+  let builders = [
+    OpBuilder<(ins), [{ build($_builder, $_state, std::nullopt); }]>
+  ];
+
+  // Provide extra utility definitions on the c++ operation class definition.
+  let extraClassDeclaration = [{
+    bool hasOperand() { return getNumOperands() != 0; }
+  }];
+
+  // Indicate that additional verification for this operation is necessary.
+  let hasVerifier = 1;
+}
 
 def Mu_FooOp : Mu_Op<"foo", [Pure, SameOperandsAndResultType]> {
     let summary = "Illustrates how to define an operation.";
