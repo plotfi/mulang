@@ -27,7 +27,6 @@
 #include "Mu/Support/µt8.h"
 #include "Mu/Parser/astenums.h"
 
-#define astout llvm::errs()
 #define indentStr "  "
 
 namespace mu {
@@ -61,14 +60,14 @@ struct ASTNodeTracker {
   fv static destroy() {
     #ifndef NDEBUG
     if (instance.has_value() && instance.value()->hasTrackedNodes()) {
-      astout << "Dumping Tracked Nodes:\n";
+      llvm::errs() << "Dumping Tracked Nodes:\n";
       for (unsigned i = 0; i < instance.value()->tracked.size(); i++) {
         if (instance.value()->tracked[i]) {
-          astout << "[" << i << "] = " << instance.value()->tracked[i] << " ";
+          llvm::errs() << "[" << i << "] = " << instance.value()->tracked[i] << " ";
           dumpASTNodeType(instance.value()->tracked[i]);
-          astout << "\n";
+          llvm::errs() << "\n";
           dumpASTNode(instance.value()->tracked[i]);
-          astout << "\n";
+          llvm::errs() << "\n";
         }
       }
     }
@@ -126,14 +125,14 @@ struct ASTNode {
   ASTNode(): tracker(ASTNodeTracker::get()) {
     this->id = tracker.size();
     tracker.track(this);
-    // astout << "Previous Node: ";
+    // llvm::errs() << "Previous Node: ";
     // if (id) {
     //   tracker.dumpNodeByID(id - 1);
     // }
-    // astout << "\n";
+    // llvm::errs() << "\n";
     // assert(id != 26 && "blow up ASTNode for debug");
     // assert(id != 102 && "blow up ASTNode for debug");
-    // astout << "create base ASTNode with id: " << id << " !!!\n";
+    // llvm::errs() << "create base ASTNode with id: " << id << " !!!\n";
   }
   // explicit ASTNode(const ASTNodeTracker &tracker) : tracker(tracker) {}
   ASTNode(const ASTNode &) = default;
@@ -142,17 +141,17 @@ struct ASTNode {
   ASTNode &operator=(ASTNode &&) = delete;
   virtual ~ASTNode() {
     #ifndef NDEBUG
-    astout << "Untracking ID: " << getID() << "\n";
+    llvm::errs() << "Untracking ID: " << getID() << "\n";
     #endif
     tracker.untrack(this);
   }
 
   fv dumpNodeInfo() const {
-    astout << " (ASTNode id: " << id;
+    llvm::errs() << " (ASTNode id: " << id;
     if (location.line > 0) {
-      astout << ", lineNumber: " << location.line;
+      llvm::errs() << ", lineNumber: " << location.line;
     }
-    astout << ") ";
+    llvm::errs() << ") ";
   }
 
   fv virtual dump(unsigned indent = 0) const = 0;
@@ -208,29 +207,29 @@ struct ASTList : public ASTNode {
 
   fv virtual dump(unsigned indent = 0) const override {
     if (printAsList) {
-      astout << "\n";
+      llvm::errs() << "\n";
       for (unsigned i = 0; i < indent; i++)
-        astout << indentStr;
-      astout << "(" << getKind() << " ";
+        llvm::errs() << indentStr;
+      llvm::errs() << "(" << getKind() << " ";
       this->dumpNodeInfo();
     }
 
     unsigned incr = printAsList ? 1 : 0;
 
     for (let thing : things) {
-      astout << "\n";
+      llvm::errs() << "\n";
       for (unsigned i = 0; i < indent + incr; i++)
-        astout << indentStr;
+        llvm::errs() << indentStr;
       thing->dump(indent + incr);
       for (unsigned i = 0; i < newlines; i++)
-        astout << "\n";
+        llvm::errs() << "\n";
     }
 
     if (printAsList) {
-      astout << "\n";
+      llvm::errs() << "\n";
       for (unsigned i = 0; i < indent; i++)
-        astout << indentStr;
-      astout << ") ";
+        llvm::errs() << indentStr;
+      llvm::errs() << ") ";
     }
   }
 
@@ -255,18 +254,18 @@ struct Expression : public ASTNode {
   fn virtual getExpressionKind() const -> ExpressionType = 0;
   fv virtual dumpInternal(unsigned indent = 0) const = 0;
   fv virtual dump(unsigned indent = 0) const override {
-    astout << '\n';
+    llvm::errs() << '\n';
     for (unsigned i = 0; i < indent; i++)
-      astout << indentStr;
-    astout << "("
+      llvm::errs() << indentStr;
+    llvm::errs() << "("
            << "\033[31m"
            << "expression type: "
            << "\033[0m"
            << getExpressionKind();
-    astout << " " << getKind() << " ";
+    llvm::errs() << " " << getKind() << " ";
     this->dumpNodeInfo();
     this->dumpInternal(indent + 1);
-    astout << ")";
+    llvm::errs() << ")";
   }
 };
 
@@ -283,9 +282,9 @@ struct UnaryExpression : public Expression {
   }
 
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << getKind() << " " << op;
+    llvm::errs() << "(" << getKind() << " " << op;
     innerExpr->dump(indent + 1);
-    astout << " )";
+    llvm::errs() << " )";
   }
 
   fn virtual getKind() const -> ASTNodeType override {
@@ -318,10 +317,10 @@ struct BinaryExpression : public Expression {
   }
 
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << getKind() << "op: " << op << " ";
+    llvm::errs() << "(" << getKind() << "op: " << op << " ";
     leftExpr->dump(indent + 1);
     rightExpr->dump(indent + 1);
-    astout << ")";
+    llvm::errs() << ")";
   }
 
   fn virtual getKind() const -> ASTNodeType override {
@@ -350,7 +349,7 @@ struct IdentifierExpression : public Expression {
     return ExpressionType::Identifier;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << getKind() << "name: " << name << " )";
+    llvm::errs() << "(" << getKind() << "name: " << name << " )";
   }
 
   fn virtual getKind() const -> ASTNodeType override {
@@ -379,7 +378,7 @@ struct ConstantExpression : public Expression {
     return ExpressionType::Constant;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << getKind() << constant << " )";
+    llvm::errs() << "(" << getKind() << constant << " )";
   }
   fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::ConstantExpr;
@@ -428,11 +427,11 @@ struct CallExpression : public Expression {
     return ExpressionType::Call;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << getKind() << " " << name << " )";
+    llvm::errs() << "(" << getKind() << " " << name << " )";
     if (exprList.has_value()) {
       exprList.value()->dump(indent);
     }
-    astout << ")";
+    llvm::errs() << ")";
   }
   fn virtual getKind() const->ASTNodeType override {
     return ASTNodeType::CallExpr;
@@ -460,9 +459,9 @@ struct ParenthesisExpression : public Expression {
     return ExpressionType::Parenthesis;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << "(" << getKind() << " ";
+    llvm::errs() << "(" << getKind() << " ";
     innerExpr->dump(indent + 1);
-    astout << " )";
+    llvm::errs() << " )";
   }
   fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::ParenthesisExpr;
@@ -487,18 +486,18 @@ struct Statement : public ASTNode {
   fn virtual getStatementKind() const -> StatementType = 0;
   fv virtual dumpInternal(unsigned indent = 0) const = 0;
   fv virtual dump(unsigned indent = 0) const override {
-    astout << '\n';
+    llvm::errs() << '\n';
     for (unsigned i = 0; i < indent; i++)
-      astout << indentStr;
-    astout << "(statement type: " << getStatementKind();
-    astout << " " << getKind() << " ";
+      llvm::errs() << indentStr;
+    llvm::errs() << "(statement type: " << getStatementKind();
+    llvm::errs() << " " << getKind() << " ";
     this->dumpNodeInfo();
     this->dumpInternal(indent + 1);
     fflush(stdout);
     if (hasExpression()) {
       getExpression()->dump(indent + 1);
     }
-    astout << ")";
+    llvm::errs() << ")";
   }
 };
 
@@ -671,7 +670,7 @@ struct AssignmentStatement : public Statement {
     return StatementType::Assignment;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << " name: " << name;
+    llvm::errs() << " name: " << name;
   }
   fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::AssignmentStat;
@@ -703,7 +702,7 @@ struct InitializationStatement : public Statement {
     return StatementType::Initialization;
   }
   fv virtual dumpInternal(unsigned indent = 0) const override {
-    astout << " name: " << name << ", varType: " << varType;
+    llvm::errs() << " name: " << name << ", varType: " << varType;
   }
   fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::InitializationStat;
@@ -728,10 +727,10 @@ struct ParamDecl : public ASTNode {
   ParamDecl(std::string name, Type varType) : name(name), varType(varType) {}
   virtual ~ParamDecl(){};
   fv virtual dump(unsigned indent = 0) const override {
-    astout << "(parameter ";
-    astout << "" << getKind() << " ";
-    astout << "name: " << name << ", ";
-    astout << "varType: " << varType << " ),";
+    llvm::errs() << "(parameter ";
+    llvm::errs() << "" << getKind() << " ";
+    llvm::errs() << "name: " << name << ", ";
+    llvm::errs() << "varType: " << varType << " ),";
   }
   fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::ParamDecl;
@@ -768,14 +767,14 @@ struct Defun : public ASTNode {
   virtual ~Defun() {}
 
   fv virtual dump(unsigned indent = 0) const override {
-    astout << "(defun name: " << name << ", type: " << returnType;
-    astout << " " << getKind() << " ";
+    llvm::errs() << "(defun name: " << name << ", type: " << returnType;
+    llvm::errs() << " " << getKind() << " ";
     this->dumpNodeInfo();
     if (params.has_value()) {
       params.value()->dump(indent + 1);
     }
     body->dump(indent + 1);
-    astout << ")";
+    llvm::errs() << ")";
   }
   fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::DefunDecl;
@@ -812,9 +811,9 @@ struct TranslationUnit : public ASTNode {
   virtual ~TranslationUnit() { }
 
   fv virtual dump(unsigned indent = 0) const override {
-    astout << "TranslationUnit Node: ";
+    llvm::errs() << "TranslationUnit Node: ";
     this->dumpNodeInfo();
-    astout << "\n";
+    llvm::errs() << "\n";
 
     functions->dump();
   };
