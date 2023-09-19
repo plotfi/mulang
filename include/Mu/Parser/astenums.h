@@ -96,57 +96,56 @@ enum class StatementType {
 };
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, ASTNodeType v) {
-  using enum ASTNodeType;
   switch (v) {
-  case ASTNodeList:
+  case ASTNodeType::ASTNodeList:
     os << "ASTNodeList";
     break;
-  case UnaryExpr:
+  case ASTNodeType::UnaryExpr:
     os << "UnaryExpr";
     break;
-  case BinaryExpr:
+  case ASTNodeType::BinaryExpr:
     os << "BinaryExpr";
     break;
-  case IdentifierExpr:
+  case ASTNodeType::IdentifierExpr:
     os << "IdentifierExpr";
     break;
-  case ConstantExpr:
+  case ASTNodeType::ConstantExpr:
     os << "ConstantExpr";
     break;
-  case StringLiteralExpr:
+  case ASTNodeType::StringLiteralExpr:
     os << "StringLiteralExpr";
     break;
-  case CallExpr:
+  case ASTNodeType::CallExpr:
     os << "CallExpr";
     break;
-  case ParenthesisExpr:
+  case ASTNodeType::ParenthesisExpr:
     os << "ParenthesisExpr";
     break;
-  case CompoundStat:
+  case ASTNodeType::CompoundStat:
     os << "CompoundStat";
     break;
-  case SelectIfStat:
+  case ASTNodeType::SelectIfStat:
     os << "SelectIfStat";
     break;
-  case IterationWhileStat:
+  case ASTNodeType::IterationWhileStat:
     os << "IterationWhileStat";
     break;
-  case JumpReturnStat:
+  case ASTNodeType::JumpReturnStat:
     os << "JumpReturnStat";
     break;
-  case AssignmentStat:
+  case ASTNodeType::AssignmentStat:
     os << "AssignmentStat";
     break;
-  case InitializationStat:
+  case ASTNodeType::InitializationStat:
     os << "InitializationStat";
     break;
-  case ParamDecl:
+  case ASTNodeType::ParamDecl:
     os << "ParamDecl";
     break;
-  case DefunDecl:
+  case ASTNodeType::DefunDecl:
     os << "DefunDecl";
     break;
-  case TranslationUnit:
+  case ASTNodeType::TranslationUnit:
     os << "TranslationUnit";
     break;
   }
@@ -154,39 +153,38 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, ASTNodeType v) {
 }
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, Type v) {
-  using enum Type;
   switch (v) {
-  case char_mut:
+  case Type::char_mut:
     os << "char_mut";
     break;
-  case uint8_mut:
+  case Type::uint8_mut:
     os << "uint8_mut";
     break;
-  case sint8_mut:
+  case Type::sint8_mut:
     os << "sint8_mut";
     break;
-  case uint16_mut:
+  case Type::uint16_mut:
     os << "uint16_mut";
     break;
-  case sint16_mut:
+  case Type::sint16_mut:
     os << "sint16_mut";
     break;
-  case uint32_mut:
+  case Type::uint32_mut:
     os << "uint32_mut";
     break;
-  case sint32_mut:
+  case Type::sint32_mut:
     os << "sint32_mut";
     break;
-  case uint64_mut:
+  case Type::uint64_mut:
     os << "uint64_mut";
     break;
-  case sint64_mut:
+  case Type::sint64_mut:
     os << "sint64_mut";
     break;
-  case float32_mut:
+  case Type::float32_mut:
     os << "float32_mut";
     break;
-  case float64_mut:
+  case Type::float64_mut:
     os << "float64_mut";
     break;
   }
@@ -194,27 +192,26 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, Type v) {
 }
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, ExpressionType v) {
-  using enum ExpressionType;
   switch (v) {
-  case Unary:
+  case ExpressionType::Unary:
     os << " unary ";
     break;
-  case Binary:
+  case ExpressionType::Binary:
     os << " binary ";
     break;
-  case Identifier:
+  case ExpressionType::Identifier:
     os << " identifier ";
     break;
-  case Constant:
+  case ExpressionType::Constant:
     os << " constant ";
     break;
-  case StringLiteral:
+  case ExpressionType::StringLiteral:
     os << " string_literal ";
     break;
-  case Call:
+  case ExpressionType::Call:
     os << " call ";
     break;
-  case Parenthesis:
+  case ExpressionType::Parenthesis:
     os << " paren ";
     break;
   }
@@ -222,15 +219,14 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, ExpressionType v) {
 }
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, UnaryOp v) {
-  using enum UnaryOp;
   switch (v) {
-  case invertOp:
+  case UnaryOp::invertOp:
     os << "op: invert ";
     break;
-  case notOp:
+  case UnaryOp::notOp:
     os << "op: not ";
     break;
-  case negOp:
+  case UnaryOp::negOp:
     os << "op: neg ";
     break;
   }

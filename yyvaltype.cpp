@@ -6,9 +6,10 @@
 #include <vector>
 
 #include "Mu/Parser/yyvaltype.h"
-#include "Mu/Support/µt8.h"
 
 #include "llvm/Support/raw_ostream.h"
+
+#include "Mu/Support/µt8.h"
 
 static std::vector<std::unique_ptr<mu::ast::YYValType>> YYValStorage;
 

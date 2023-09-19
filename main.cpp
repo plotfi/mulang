@@ -20,10 +20,8 @@
 #include <valarray>
 #include <vector>
 
-#include "Mu/Parser/ast.h"
 #include "Mu/MuMLIRGen.h"
 
-#include "Mu/Support/µt8.h"
 #include "mlir/IR/AsmState.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
@@ -36,6 +34,9 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+
+#include "Mu/Parser/ast.h"
+#include "Mu/Support/µt8.h"
 
 using namespace mlir::mu;
 namespace cl = llvm::cl;
