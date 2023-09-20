@@ -54,14 +54,19 @@ mlir::LogicalResult ReturnOp::verify() {
   auto resultType = results.front();
 
   // Check that the result type of the function matches the operand type.
-  if (inputType == resultType ||
-      llvm::isa<mlir::UnrankedTensorType>(inputType) ||
-      llvm::isa<mlir::UnrankedTensorType>(resultType))
+  if (inputType == resultType)
     return mlir::success();
 
   return emitError() << "type of return operand (" << inputType
                      << ") doesn't match function result type (" << resultType
                      << ")";
+}
+
+/// Verifier for the constant operation. This corresponds to the `::verify(...)`
+/// in the op definition.
+mlir::LogicalResult ConstantOp::verify() {
+  // return verifyConstantForType(getResult().getType(), getValue(), *this);
+  return mlir::success();
 }
 
 } // namespace  mu

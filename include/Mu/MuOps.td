@@ -109,6 +109,66 @@ def ReturnOp : Mu_Op<"return", [Pure, HasParent<"FuncOp">,
   let hasVerifier = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// ConstantOp
+//===----------------------------------------------------------------------===//
+
+// We define a mu operation by inheriting from our base 'Mu_Op' class above.
+// Here we provide the mnemonic and a list of traits for the operation. The
+// constant operation is marked as 'Pure' as it is a pure operation
+// and may be removed if dead.
+def ConstantOp
+    : Mu_Op<"mlir.constant", [ConstantLike, Pure]>
+{
+  // Provide a summary and description for this operation. This can be used to
+  // auto-generate documentation of the operations within our dialect.
+  let summary = "constant";
+  let description = [{
+    Constant operation turns a literal into an SSA value. The data is attached
+    to the operation as an attribute. For example:
+
+    ```mlir
+      %0 = mu.constant 42 + int32
+    ```
+  }];
+
+  let arguments = (ins AnyAttr:$value);
+  let results = (outs Mu_Type:$res);
+
+  let assemblyFormat = "`(` $value `)` attr-dict `:` type($res)";
+  // Indicate that the operation has a custom parser and printer method.
+  // let hasCustomAssemblyFormat = 1;
+
+  let builders = [
+    OpBuilder<(ins "Type":$type, "int64_t":$value), [{
+      build($_builder, $_state, type, $_builder.getIntegerAttr(type, value));
+    }]>,
+    OpBuilder<(ins "Type":$type, "const APInt &":$value), [{
+      build($_builder, $_state, type, $_builder.getIntegerAttr(type, value));
+    }]>,
+    OpBuilder<(ins "Type":$type, "const APFloat &":$value), [{
+      build($_builder, $_state, type, $_builder.getFloatAttr(type, value));
+    }]>,
+    OpBuilder<(ins "TypedAttr":$value), [{
+      build($_builder, $_state, value.getType(), value);
+    }]>
+  ];
+
+  let extraClassDeclaration = [{
+    /// Whether the constant op can be constructed with a particular value and
+    /// type.
+    static bool isBuildableWith(Attribute value, Type type);
+
+    /// Build the constant op with `value` and `type` if possible, otherwise
+    /// returns null.
+    static ConstantOp materialize(OpBuilder &builder, Attribute value,
+                                  Type type, Location loc);
+  }];
+
+  let hasFolder = 1;
+  let hasVerifier = 1;
+}
+
 def Mu_FooOp : Mu_Op<"foo", [Pure, SameOperandsAndResultType]> {
     let summary = "Illustrates how to define an operation.";
     let description = [{
