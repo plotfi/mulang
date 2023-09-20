@@ -17,8 +17,6 @@ namespace mlir::mu {
 #define GEN_PASS_DEF_MUSWITCHBARFOO
 #include "Mu/MuPasses.h.inc"
 
-OpFoldResult ConstantOp::fold(FoldAdaptor adaptor) { return getValue(); }
-
 namespace {
 class MuSwitchBarFooRewriter : public OpRewritePattern<func::FuncOp> {
 public:

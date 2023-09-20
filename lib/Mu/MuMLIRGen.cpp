@@ -170,7 +170,6 @@ private:
     #endif
 
     builder.create<ReturnOp>(loc(funcAST.getLocation()));
-    builder.create<ConstantOp>(loc(funcAST.getLocation()), 42);
 
     #if 0
     // Implicitly return void if no return statement was emitted.
@@ -188,9 +187,6 @@ private:
           function.getFunctionType().getInputs(), getType(VarType{})));
     }
     #endif
-
-      function.setType(builder.getFunctionType(
-          function.getFunctionType().getInputs(), getType(funcAST.getReturnType())));
 
     return function;
   }
