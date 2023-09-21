@@ -281,6 +281,11 @@ struct UnaryExpression : public Expression {
     return ExpressionType::Unary;
   }
 
+  fn getOp() const -> UnaryOp { return op; }
+  fn getInternalExpression() const -> CxxRef<Expression> {
+    return *innerExpr.get();
+  }
+
   fv virtual dumpInternal(unsigned indent = 0) const override {
     llvm::errs() << "(" << getKind() << " " << op;
     innerExpr->dump(indent + 1);
@@ -365,8 +370,6 @@ private:
 };
 
 struct ConstantExpression : public Expression {
-
-  [[gnu::pure]] int wtf() const { return 42; }
   ConstantExpression() = delete;
   ConstantExpression(const ConstantExpression &) = default;
   ConstantExpression(ConstantExpression &&) = delete;
@@ -387,6 +390,8 @@ struct ConstantExpression : public Expression {
   static bool classof(const ASTNode *node) {
     return node->getKind() == ASTNodeType::ConstantExpr;
   }
+
+  fn getValue() const -> int32_t { return 42; }
 
 private:
   std::string constant;
