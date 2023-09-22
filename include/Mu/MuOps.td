@@ -193,4 +193,51 @@ def NegOp : Mu_Op<"neg", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
   ];
 }
 
+//===----------------------------------------------------------------------===//
+// NotOp
+//===----------------------------------------------------------------------===//
+
+def NotOp : Mu_Op<"not", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
+  let summary = "unary not operation";
+  let description = [{
+    The "not" operation makes a numeric value boolean inverted.
+    If value is not 0 it becomes 0, if it is 0 it becomes 1.
+  }];
+
+  let arguments = (ins Mu_Type:$value);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+
+  // Allow building an NotOp from one input expr
+  let builders = [
+    OpBuilder<(ins "Value":$innerExpr)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
+// InvertOp
+//===----------------------------------------------------------------------===//
+
+def InvertOp : Mu_Op<"invert", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
+  let summary = "unary invert operation";
+  let description = [{
+    The "invert" operation makes a numeric value bitwise inverted.
+  }];
+
+  let arguments = (ins Mu_Type:$value);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+
+  // Allow building an InvertOp from one input expr
+  let builders = [
+    OpBuilder<(ins "Value":$innerExpr)>
+  ];
+}
+
+
+
 #endif // MU_OPS

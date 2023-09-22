@@ -98,7 +98,7 @@ void FuncOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
 }
 
 //===----------------------------------------------------------------------===//
-// AddOp
+// NegOp
 //===----------------------------------------------------------------------===//
 
 void NegOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
@@ -113,6 +113,40 @@ mlir::ParseResult NegOp::parse(mlir::OpAsmParser &parser,
 }
 
 void NegOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+//===----------------------------------------------------------------------===//
+// NotOp
+//===----------------------------------------------------------------------===//
+
+void NotOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value innerValue) {
+  state.addTypes(innerValue.getType());
+  state.addOperands({innerValue});
+}
+
+mlir::ParseResult NotOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void NotOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+//===----------------------------------------------------------------------===//
+// InvertOp
+//===----------------------------------------------------------------------===//
+
+void InvertOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value innerValue) {
+  state.addTypes(innerValue.getType());
+  state.addOperands({innerValue});
+}
+
+mlir::ParseResult InvertOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void InvertOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 
 } // namespace mu
 } // namespace mlir

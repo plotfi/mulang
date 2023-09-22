@@ -24,6 +24,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <numeric>
 
@@ -237,16 +238,18 @@ private:
       case mu::ast::enums::UnaryOp::negOp: {
         return builder.create<NegOp>(location, innerValue);
       }
-      // case mu::ast::enums::UnaryOp::notOp:
-      // case mu::ast::enums::UnaryOp::invertOp:
-      default: {
-        std::string str;
-        llvm::raw_string_ostream sstr(str);
-        sstr <<  unaryOp.getOp();
-        emitError(location, "invalid unary operator '") << str << "'";
-        return nullptr;
+      case mu::ast::enums::UnaryOp::notOp: {
+        return builder.create<NotOp>(location, innerValue);
+      }
+      case mu::ast::enums::UnaryOp::invertOp: {
+        return builder.create<InvertOp>(location, innerValue);
       }
     }
+
+    std::string str;
+    llvm::raw_string_ostream sstr(str);
+    sstr << "invalid unary operator " << unaryOp.getOp();
+    llvm_unreachable(str.c_str());
   }
 
   /// Emit a constant for a single number (FIXME: semantic? broadcast?)
