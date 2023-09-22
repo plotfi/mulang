@@ -88,3 +88,5 @@ target_link_libraries(muc
     MLIRSideEffectInterfaces
     MLIRTransforms
     ${LIBS})
+
+# add_subdirectory(test)
