@@ -71,8 +71,6 @@ def FuncOp : Mu_Op<"func", [
   let skipDefaultBuilders = 1;
 }
 
-
-// ReturnLike?
 def ReturnOp : Mu_Op<"return", [Pure, HasParent<"FuncOp">,
                                  Terminator]> {
   let summary = "return operation";
@@ -174,7 +172,7 @@ def ConstantOp
 }
 
 //===----------------------------------------------------------------------===//
-// AddOp
+// NegOp
 //===----------------------------------------------------------------------===//
 
 def NegOp : Mu_Op<"neg", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
@@ -193,32 +191,6 @@ def NegOp : Mu_Op<"neg", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
   let builders = [
     OpBuilder<(ins "Value":$innerExpr)>
   ];
-}
-
-def Mu_FooOp : Mu_Op<"foo", [Pure, SameOperandsAndResultType]> {
-    let summary = "Illustrates how to define an operation.";
-    let description = [{
-        The `mu.foo` operation illustrates how to define a new
-        operation in a dialect. It uses an operation trait to declare that it
-        has no side effects.
-
-        This operation takes an integer argument and returns an integer.
-
-        Example:
-
-        ```mlir
-        %0 = arith.constant 2 : i32
-        // Apply the foo operation to %0
-        %1 = mu.foo %0 : i32
-        ```
-    }];
-
-    let arguments = (ins I32:$input);
-    let results = (outs I32:$res);
-
-    let assemblyFormat = [{
-        $input attr-dict `:` type($input)
-    }];
 }
 
 #endif // MU_OPS

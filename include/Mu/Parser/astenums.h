@@ -95,6 +95,16 @@ enum class StatementType {
   Initialization
 };
 
+enum class ConstantType {
+  IntKindHex,
+  IntKind1,
+  IntKind2,
+  Char,
+  FloatKind1,
+  FloaKind2,
+  FloatKind3
+};
+
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, ASTNodeType v) {
   switch (v) {
   case ASTNodeType::ASTNodeList:
@@ -313,6 +323,33 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, StatementType v) {
   case StatementType::Initialization:
     os << "initialize";
     break;
+  }
+  return os;
+}
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, ConstantType v) {
+  switch (v) {
+    case ConstantType::IntKindHex:
+      os << "inthex";
+      break;
+    case ConstantType::IntKind1:
+      os << "intkind1";
+      break;
+    case ConstantType::IntKind2:
+      os << "intkind2";
+      break;
+    case ConstantType::Char:
+      os << "char";
+      break;
+    case ConstantType::FloatKind1:
+      os << "floatkind1";
+      break;
+    case ConstantType::FloaKind2:
+      os << "floatkind2";
+      break;
+    case ConstantType::FloatKind3:
+      os << "floatkind3";
+      break;
   }
   return os;
 }

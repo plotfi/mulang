@@ -375,7 +375,8 @@ struct ConstantExpression : public Expression {
   ConstantExpression(ConstantExpression &&) = delete;
   ConstantExpression &operator=(const ConstantExpression &) = delete;
   ConstantExpression &operator=(ConstantExpression &&) = delete;
-  ConstantExpression(std::string constant) : constant(constant) {}
+  ConstantExpression(std::string constant, mu::ast::enums::ConstantType type):
+    constant(constant), type(type) {}
   virtual ~ConstantExpression() {}
   fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::Constant;
@@ -391,10 +392,21 @@ struct ConstantExpression : public Expression {
     return node->getKind() == ASTNodeType::ConstantExpr;
   }
 
-  fn getValue() const -> int32_t { return 42; }
+  fn getValueAsInt() const -> int32_t {
+    assert((type == mu::ast::enums::ConstantType::Char ||
+            type == mu::ast::enums::ConstantType::IntKind1 ||
+            type == mu::ast::enums::ConstantType::IntKind2 ||
+            type == mu::ast::enums::ConstantType::IntKindHex) &&
+           "can not get value as int if it is not integral");
+    if (type == mu::ast::enums::ConstantType::Char) {
+      return constant.c_str()[0];
+    }
+    return std::stoi(constant);
+  }
 
 private:
   std::string constant;
+  mu::ast::enums::ConstantType type;
 };
 
 struct StringLiteralExpression : public Expression {

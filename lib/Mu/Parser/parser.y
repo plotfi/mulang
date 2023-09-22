@@ -223,7 +223,31 @@ primary_expression
       ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
   | CONSTANT {
-    $$ = new ConstantExpression(static_cast<YYValType *>($1)->value);
+    auto value = static_cast<YYValType *>($1)->value;
+    auto tokText = static_cast<YYValType *>($1)->tokText;
+
+    mu::ast::enums::ConstantType constantType = mu::ast::enums::ConstantType::Char;
+    if (tokText == "CONSTANT_INT_HEX") {
+      constantType = mu::ast::enums::ConstantType::IntKindHex;
+    } else if (tokText == "CONSTANT_INT_KIND1") {
+      constantType = mu::ast::enums::ConstantType::IntKind1;
+    } else if (tokText == "CONSTANT_INT_KIND2") {
+      constantType = mu::ast::enums::ConstantType::IntKind2;
+    } else if (tokText == "CONSTANT_CHAR") {
+      constantType = mu::ast::enums::ConstantType::Char;
+    } else if (tokText == "CONSTANT_FLOAT_KIND1") {
+      constantType = mu::ast::enums::ConstantType::FloatKind1;
+    } else if (tokText == "CONSTANT_FLOAT_KIND2") {
+      constantType = mu::ast::enums::ConstantType::FloaKind2;
+    } else if (tokText == "CONSTANT_FLOAT_KIND3") {
+      constantType = mu::ast::enums::ConstantType::FloatKind3;
+    } else {
+      yyerror("invalid constant kind");
+      assert(false && "EXIT_FAILURE");
+      exit(EXIT_FAILURE);
+    }
+
+    $$ = new ConstantExpression(value, constantType);
     checked_ptr_cast<ASTNode>($$)
       ->setLineNumber(static_cast<YYValType *>($1)->linenum);
   }
@@ -482,8 +506,10 @@ extern int g_line;
 extern std::string g_lastLine;
 
 void yyerror(const char *s) {
-  llvm::errs() << "error: parse error at line " << g_line << " column "
+  llvm::errs() << "error: parse error ("
+               << s
+               << ") at line " << g_line << " column "
                << g_column << ":\n";
   llvm::errs() << g_lastLine << "\n";
-  fprintf(stderr, "\n%*s\n%*s\n", g_column, "^", g_column, s);
+  // fprintf(stderr, "\n%*s\n%*s\n", g_column, "^", g_column, s);
 }

@@ -1,3 +1,3 @@
 fn answer() -> int32 {
-  return -42;
+  return -1234;
 }

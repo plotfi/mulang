@@ -253,7 +253,7 @@ private:
   mlir::Value mlirGen(const mu::ast::ConstantExpression &num) {
     return builder.create<ConstantOp>(loc(num.getLocation()),
                                       builder.getI32Type(),
-                                      42); // TODO: Fix
+                                      num.getValueAsInt()); // TODO: Fix
   }
 
   /// Build an MLIR type from a Mu AST variable type (forward to the generic

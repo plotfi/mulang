@@ -22,7 +22,13 @@ void comment();
 void comment2();
 
 static const char *identifier_str = "IDENTIFIER";
-static const char *constant_str = "CONSTANT";
+static const char *constant_int_hex = "CONSTANT_INT_HEX";
+static const char *constant_int_kind1 = "CONSTANT_INT_KIND1";
+static const char *constant_int_kind2 = "CONSTANT_INT_KIND2";
+static const char *constant_char = "CONSTANT_CHAR";
+static const char *constant_float_kind1 = "CONSTANT_FLOAT_KIND1";
+static const char *constant_float_kind2 = "CONSTANT_FLOAT_KIND2";
+static const char *constant_float_kind3 = "CONSTANT_FLOAT_KIND3";
 static const char *keyword_str = "KEYWORD";
 static const char *type_str = "TYPE";
 static const char *strliteral_str = "STRING_LITERAL";
@@ -65,14 +71,14 @@ std::string g_lastLine = "";
 
 {L}({L}|{D})*          { count(); COPY_YYVAL(g_line, yytext, identifier_str); return(check_type()); }
 
-0[xX]{H}+{IS}?         { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
-0{D}+{IS}?             { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
-{D}+{IS}?              { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
-L?'(\\.|[^\\'])+'      { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
+0[xX]{H}+{IS}?         { count(); COPY_YYVAL(g_line, yytext, constant_int_hex); return(CONSTANT); }
+0{D}+{IS}?             { count(); COPY_YYVAL(g_line, yytext, constant_int_kind1); return(CONSTANT); }
+{D}+{IS}?              { count(); COPY_YYVAL(g_line, yytext, constant_int_kind2); return(CONSTANT); }
+L?'(\\.|[^\\'])+'      { count(); COPY_YYVAL(g_line, yytext, constant_char); return(CONSTANT); }
 
-{D}+{E}{FS}?           { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
-{D}*"."{D}+({E})?{FS}? { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
-{D}+"."{D}*({E})?{FS}? { count(); COPY_YYVAL(g_line, yytext, constant_str); return(CONSTANT); }
+{D}+{E}{FS}?           { count(); COPY_YYVAL(g_line, yytext, constant_float_kind1); return(CONSTANT); }
+{D}*"."{D}+({E})?{FS}? { count(); COPY_YYVAL(g_line, yytext, constant_float_kind2); return(CONSTANT); }
+{D}+"."{D}*({E})?{FS}? { count(); COPY_YYVAL(g_line, yytext, constant_float_kind3); return(CONSTANT); }
 
 L?\"(\\.|[^\\"])*\"    { count(); COPY_YYVAL(g_line, yytext, strliteral_str); return(STRING_LITERAL); }
 

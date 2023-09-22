@@ -14,7 +14,7 @@
 static std::vector<std::unique_ptr<mu::ast::YYValType>> YYValStorage;
 
 fn mu::ast::makeYYValType(unsigned linenum, Ref<char> value, Ref<char> token)
-    ->Ref<mu::ast::YYValType> {
+    -> Ref<mu::ast::YYValType> {
 
   #ifndef NDEBUG
   llvm::errs() << "makeYYValType-ing: " << value << " " << token << " "
