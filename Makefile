@@ -1,5 +1,5 @@
-BUILD_DIR:=/Users/plotfi/opt/dev/llvm-project/build
-PREFIX:=/Users/plotfi/opt/dev/llvm-project/destdir
+BUILD_DIR:=$(LLVM_DIR)/build
+PREFIX:=$(LLVM_DIR)/destdir
 
 all:
 	cmake -G Ninja -B./build . -DMLIR_DIR=$(PREFIX)/lib/cmake/mlir -DLLVM_EXTERNAL_LIT=$(BUILD_DIR)/bin/llvm-lit

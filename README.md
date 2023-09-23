@@ -3,8 +3,11 @@
 A language just for fun.
 
 The grammar was orignally taken from a C grammer at https://www.lysator.liu.se/c but has since been heavily modified.
+The only C parts left are mostly from the lexer and from the binary expression parsing.
 
-The syntax is as follows:
+The Mu (muc) compiler uses [MLIR](https://mlir.llvm.org).
+
+## Syntax
 
 ```mu
 
@@ -45,7 +48,36 @@ fn main() -> int {
 }
 ```
 
-I intend to add structs and arrays eventually, and my intention is to use [MLIR](https://mlir.llvm.org).
 
+## Build Steps
 
+First, build LLVM like so:
 
+```bash
+mkdir ~/opt/dev   # I like to develop projects here
+git clone https://github.com/llvm/llvm-project
+cd llvm-project
+
+cmake -GNinja -DCMAKE_BUILD_TYPE=Release \
+              -DLLVM_ENABLE_ASSERTIONS=ON \
+              -DLLVM_BUILD_EXAMPLES=ON \
+              -DLLVM_TARGETS_TO_BUILD="Native" \
+              -DLLVM_ENABLE_PROJECTS="clang;mlir" \
+              -DLLVM_INSTALL_UTILS=ON \
+              -B./build \
+              -DCMAKE_INSTALL_PREFIX=./destdir \
+              ./llvm
+
+ninja -C ./build
+ninja -C ./build install
+```
+
+Next, checkout mulang and build like so:
+
+```bash
+cd ~/opt/dev
+git clone https://github.com/plotfi/mulang
+
+export LLVM_DIR=$HOME/opt/dev/llvm-project
+make
+```
