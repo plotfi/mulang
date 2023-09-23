@@ -175,7 +175,7 @@ def ConstantOp
 // NegOp
 //===----------------------------------------------------------------------===//
 
-def NegOp : Mu_Op<"neg", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
+def NegOp : Mu_Op<"neg", [Pure]> {
   let summary = "unary negation operation";
   let description = [{
     The "neg" operation makes a numeric value negative.
@@ -197,7 +197,7 @@ def NegOp : Mu_Op<"neg", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
 // NotOp
 //===----------------------------------------------------------------------===//
 
-def NotOp : Mu_Op<"not", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
+def NotOp : Mu_Op<"not", [Pure]> {
   let summary = "unary not operation";
   let description = [{
     The "not" operation makes a numeric value boolean inverted.
@@ -220,7 +220,7 @@ def NotOp : Mu_Op<"not", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
 // InvertOp
 //===----------------------------------------------------------------------===//
 
-def InvertOp : Mu_Op<"invert", [Pure, SameTypeOperands, Elementwise, Scalarizable]> {
+def InvertOp : Mu_Op<"invert", [Pure]> {
   let summary = "unary invert operation";
   let description = [{
     The "invert" operation makes a numeric value bitwise inverted.
@@ -238,6 +238,48 @@ def InvertOp : Mu_Op<"invert", [Pure, SameTypeOperands, Elementwise, Scalarizabl
   ];
 }
 
+//===----------------------------------------------------------------------===//
+// AddOp
+//===----------------------------------------------------------------------===//
 
+def AddOp : Mu_Op<"add", [Pure, Commutative]> {
+  let summary = "Add operation for two values.";
+  let description = [{
+    The "add" operation performs addition between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+
+  // Allow building an AddOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
+// MulOp
+//===----------------------------------------------------------------------===//
+
+def MulOp : Mu_Op<"mul", [Pure, Commutative]> {
+  let summary = "Multiply operation for two values.";
+  let description = [{
+    The "mul" operation performs multiplication between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+
+  // Allow building a MulOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
 
 #endif // MU_OPS

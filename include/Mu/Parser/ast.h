@@ -328,6 +328,10 @@ struct BinaryExpression : public Expression {
     llvm::errs() << ")";
   }
 
+  fn getBinaryOp() const -> mu::ast::enums::BinaryOp { return op; }
+  fn getLHS() const -> CxxRef<Expression> { return *leftExpr; }
+  fn getRHS() const -> CxxRef<Expression> { return *rightExpr; }
+
   fn virtual getKind() const -> ASTNodeType override {
     return ASTNodeType::BinaryExpr;
   }

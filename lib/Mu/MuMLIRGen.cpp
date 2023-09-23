@@ -210,8 +210,8 @@ private:
     switch (expr.getExpressionKind()) {
     case mu::ast::enums::ExpressionType::Unary:
       return mlirGen(cast<mu::ast::UnaryExpression>(expr));
-    // case mu::ast::enums::ExpressionType::Binary:
-    //   return mlirGen(cast<mu::ast::BinaryExpression>(expr));
+    case mu::ast::enums::ExpressionType::Binary:
+      return mlirGen(cast<mu::ast::BinaryExpression>(expr));
     case mu::ast::enums::ExpressionType::Constant:
       return mlirGen(cast<mu::ast::ConstantExpression>(expr));
     default:
@@ -249,6 +249,48 @@ private:
     std::string str;
     llvm::raw_string_ostream sstr(str);
     sstr << "invalid unary operator " << unaryOp.getOp();
+    llvm_unreachable(str.c_str());
+  }
+
+  /// Emit a binary operation
+  mlir::Value mlirGen(const mu::ast::BinaryExpression &binaryOp) {
+    // First emit the operations for each side of the operation before emitting
+    // the operation itself. For example if the expression is `a + foo(a)`
+    // 1) First it will visiting the LHS, which will return a reference to the
+    //    value holding `a`. This value should have been emitted at declaration
+    //    time and registered in the symbol table, so nothing would be
+    //    codegen'd. If the value is not in the symbol table, an error has been
+    //    emitted and nullptr is returned.
+    // 2) Then the RHS is visited (recursively) and a call to `foo` is emitted
+    //    and the result value is returned. If an error occurs we get a nullptr
+    //    and propagate.
+    //
+    mlir::Value lhs = mlirGen(binaryOp.getLHS());
+    if (!lhs)
+      return nullptr;
+    auto location = loc(binaryOp.getLocation());
+
+    // Otherwise, this is a normal binary op.
+    mlir::Value rhs = mlirGen(binaryOp.getRHS());
+    if (!rhs)
+      return nullptr;
+
+    // Derive the operation name from the binary operator. At the moment we only
+    // support '+' and '*'.
+    switch (binaryOp.getBinaryOp()) {
+    case  mu::ast::enums::BinaryOp::addOp:
+      return builder.create<AddOp>(location, lhs, rhs);
+    case  mu::ast::enums::BinaryOp::mulOp:
+      return builder.create<MulOp>(location, lhs, rhs);
+    default:
+      break;
+    }
+
+    std::string str;
+    llvm::raw_string_ostream sstr(str);
+    sstr << binaryOp.getBinaryOp();
+    emitError(location, "invalid binary operator '") << str << "'";
+
     llvm_unreachable(str.c_str());
   }
 
