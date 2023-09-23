@@ -1,10 +1,4 @@
-
-// type int = int32;
-
-
-fn bar2(a: int32) -> int32 {
-  return 42 + a;
-}
+// RUN: muc --emit=ast %s
 
 fn bar(a: int32) -> int32 {
   return 42 + a;
@@ -29,7 +23,7 @@ fn foo(b: int32, z: int32) -> int32 {
 }
 
 fn fibonacci(n: int32) -> int32 {
-  
+
   if n < 1 {
     return 0;
   } else  {
@@ -48,7 +42,7 @@ fn fibonacci(n: int32) -> int32 {
     current = next;
     i = i + 1;
   }
-  
+
   return current;
 }
 
