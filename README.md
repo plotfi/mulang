@@ -5,6 +5,8 @@ A language just for fun.
 The grammar was orignally taken from a C grammer at https://www.lysator.liu.se/c but has since been heavily modified.
 The only C parts left are mostly from the lexer and from the binary expression parsing.
 
+Mulang depends on LLVM and MLIR as well as Flex and Bison.
+
 The Mu (muc) compiler uses [MLIR](https://mlir.llvm.org).
 
 ## Syntax
