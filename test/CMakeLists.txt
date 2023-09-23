@@ -14,3 +14,8 @@ add_lit_testsuite(check-mu "Running the mu regression tests"
 set_target_properties(check-mu PROPERTIES FOLDER "Tests")
 
 add_lit_testsuites(MU ${CMAKE_CURRENT_SOURCE_DIR} DEPENDS ${MU_TEST_DEPENDS})
+
+# Setup an alias for 'check-mu'.
+add_custom_target(check)
+add_dependencies(check check-mu)
+set_target_properties(check PROPERTIES FOLDER "Tests")

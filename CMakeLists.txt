@@ -64,7 +64,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wno-sign-compare \
                      -Wno-unused-parameter -Wno-unused-function \
                      -Wno-ambiguous-reversed-operator")
 
-add_executable(muc main.cpp yyvaltype.cpp
+add_llvm_executable(muc main.cpp yyvaltype.cpp
                    "${CMAKE_CURRENT_BINARY_DIR}/lex.cpp"
                    "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp")
 
@@ -89,4 +89,4 @@ target_link_libraries(muc
     MLIRTransforms
     ${LIBS})
 
-# add_subdirectory(test)
+add_subdirectory(test)
