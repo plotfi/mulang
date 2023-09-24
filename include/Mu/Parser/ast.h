@@ -346,7 +346,12 @@ private:
   Ref<Expression> rightExpr;
 };
 
-struct IdentifierExpression : public Expression {
+struct NamedDecl {
+  virtual ~NamedDecl() {} 
+  fn virtual getName() const -> CxxRef<std::string> = 0;
+};
+
+struct IdentifierExpression : public Expression, public NamedDecl {
   IdentifierExpression() = delete;
   IdentifierExpression(const IdentifierExpression &) = default;
   IdentifierExpression(IdentifierExpression &&) = delete;
@@ -369,7 +374,7 @@ struct IdentifierExpression : public Expression {
     return node->getKind() == ASTNodeType::IdentifierExpr;
   }
 
-  fn getName() const -> CxxRef<std::string> { return name; }
+  fn virtual getName() const -> CxxRef<std::string> override { return name; }
 
 private:
   std::string name;
@@ -708,7 +713,7 @@ private:
   std::string name;
 };
 
-struct InitializationStatement : public Statement {
+struct InitializationStatement : public Statement, public NamedDecl {
   InitializationStatement(const InitializationStatement &) = default;
   InitializationStatement(InitializationStatement &&) = delete;
   InitializationStatement &operator=(const InitializationStatement &) = delete;
@@ -735,13 +740,16 @@ struct InitializationStatement : public Statement {
     return node->getKind() == ASTNodeType::InitializationStat;
   }
 
+  fn virtual getName() const -> CxxRef<std::string> override { return name; }
+  fn getType() const -> Type { return varType; }
+
 private:
   Ref<Expression> expr;
   std::string name;
   Type varType;
 };
 
-struct ParamDecl : public ASTNode {
+struct ParamDecl : public ASTNode, public NamedDecl {
   ParamDecl() = delete;
   ParamDecl(const ParamDecl &) = default;
   ParamDecl(ParamDecl &&) = delete;
@@ -763,7 +771,7 @@ struct ParamDecl : public ASTNode {
     return node->getKind() == ASTNodeType::ParamDecl;
   }
 
-  fn getName() const -> CxxRef<std::string> { return name; }
+  fn virtual getName() const -> CxxRef<std::string> override { return name; }
   fn getType() const -> Type { return varType; }
 
 private:

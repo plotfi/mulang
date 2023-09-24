@@ -33,6 +33,7 @@
 #include "Mu/MuMLIRGen.h"
 #include "Mu/Parser/ast.h"
 #include "Mu/Parser/astenums.h"
+#include "mlir/Support/LogicalResult.h"
 
 using namespace mlir::mu;
 using namespace mu;
@@ -92,10 +93,10 @@ private:
   /// added to the mapping. When the processing of a function is terminated, the
   /// scope is destroyed and the mappings created in this scope are dropped.
   llvm::ScopedHashTable<StringRef,
-                        std::pair<mlir::Value, const mu::ast::ParamDecl *>>
+                        std::pair<mlir::Value, const mu::ast::NamedDecl *>>
       symbolTable;
   using SymbolTableScopeT = llvm::ScopedHashTableScope<
-      StringRef, std::pair<mlir::Value, const mu::ast::ParamDecl *>>;
+      StringRef, std::pair<mlir::Value, const mu::ast::NamedDecl *>>;
 
   /// Helper conversion for a Mu AST location to an MLIR location.
   mlir::Location loc(const mu::ast::Location &loc) {
@@ -105,7 +106,7 @@ private:
 
   /// Declare a variable in the current scope, return success if the variable
   /// wasn't declared yet.
-  mlir::LogicalResult declare(const mu::ast::ParamDecl &param,
+  mlir::LogicalResult declare(const mu::ast::NamedDecl &param,
                               mlir::Value value) {
     if (symbolTable.count(param.getName()))
       return mlir::failure();
@@ -195,10 +196,52 @@ private:
   /// Codegen a list of expression, return failure if one of them hit an error.
   mlir::LogicalResult mlirGen(const mu::ast::CompoundStatement &body) {
     for (const auto stmt : body) {
-      if (const auto ret = dyn_cast<mu::ast::JumpReturnStatement>(stmt)) {
-        return mlirGen(*ret);
+      if (const auto s = dyn_cast<mu::ast::JumpReturnStatement>(stmt);
+        s && mlirGen(*s).failed()) {
+        return mlir::failure();
+      } else if (const auto s = dyn_cast<ast::InitializationStatement>(stmt);
+                 s && mlirGen(*s).failed()) {
+        return mlir::failure();
       }
     }
+    return mlir::success();
+  }
+
+
+  /// Handle a variable declaration, we'll codegen the expression that forms the
+  /// initializer and record the value in the symbol table before returning it.
+  /// Future expressions will be able to reference this variable through symbol
+  /// table lookup.
+  mlir::LogicalResult mlirGen(const mu::ast::InitializationStatement &initDecl) {
+    const auto init = initDecl.getExpression();
+
+    mlir::Value value = mlirGen(*init);
+    if (!value) {
+      return mlir::failure();
+    }
+
+    // Handle the case where we are initializing a struct value.
+    auto initType = initDecl.getType();
+
+    // Check that the initializer type is the same as the variable
+    // declaration.
+    mlir::Type type = getType(initType);
+    if (!type) {
+      return mlir::failure();
+    }
+
+    if (type != value.getType()) {
+      emitError(loc(initDecl.getLocation()))
+        << "type of initializer is different than the value given. Got "
+        << value.getType() << ", but expected " << type;
+      return mlir::failure();
+    }
+
+    // Register the value in the symbol table.
+    if (failed(declare(initDecl, value))) {
+      return mlir::failure();
+    }
+
     return mlir::success();
   }
 
