@@ -1,2 +1,2 @@
-*.mu linguist-language=rust linguist-detectable linguist-color-override=0xff00ff linguist-name-override=mulang
+*.mu linguist-language=swift
 
