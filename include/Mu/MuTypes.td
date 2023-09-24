@@ -32,4 +32,8 @@ def Mu_CustomType : Mu_DummyType<"Custom", "custom"> {
 // Provide a definition of the types that are used within the Toy dialect.
 def Mu_Type : AnyTypeOf<[I32]>;
 
+def Mu_Bool : AnyTypeOf<[I1]>;
+
+def Mu_Any : AnyTypeOf<[Mu_Type, Mu_Bool]>;
+
 #endif // MU_TYPES

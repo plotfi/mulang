@@ -235,7 +235,90 @@ mlir::ParseResult DivOp::parse(mlir::OpAsmParser &parser,
 
 void DivOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 
+///===---------------------------------------------------------------------===//
+// ModOp
+///===---------------------------------------------------------------------===//
 
+void ModOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(lhs.getType());
+  state.addOperands({lhs, rhs});
+}
+
+mlir::ParseResult ModOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void ModOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+///===---------------------------------------------------------------------===//
+// AndOp
+///===---------------------------------------------------------------------===//
+
+void AndOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(lhs.getType());
+  state.addOperands({lhs, rhs});
+}
+
+mlir::ParseResult AndOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void AndOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+///===---------------------------------------------------------------------===//
+// OrOp
+///===---------------------------------------------------------------------===//
+
+void OrOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(lhs.getType());
+  state.addOperands({lhs, rhs});
+}
+
+mlir::ParseResult OrOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void OrOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+///===---------------------------------------------------------------------===//
+// OrBoolOp
+///===---------------------------------------------------------------------===//
+
+void OrBoolOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(builder.getI1Type());
+  state.addOperands({lhs, rhs});
+}
+
+mlir::ParseResult OrBoolOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void OrBoolOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+///===---------------------------------------------------------------------===//
+// AndBoolOp
+///===---------------------------------------------------------------------===//
+
+void AndBoolOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(builder.getI1Type());
+  state.addOperands({lhs, rhs});
+}
+
+mlir::ParseResult AndBoolOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void AndBoolOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 
 
 } // namespace mu

@@ -142,8 +142,9 @@ private:
     // Create an MLIR function for the given prototype.
     builder.setInsertionPointToEnd(theModule.getBody());
     mlir::mu::FuncOp function = mlirGenFunctionProto(funcAST);
-    if (!function)
+    if (!function) {
       return nullptr;
+    }
 
     // Let's start the body of the function now!
     mlir::Block &entryBlock = function.front();
@@ -183,7 +184,9 @@ private:
       // the function.
       function.setType(
           builder.getFunctionType(function.getFunctionType().getInputs(),
-                                  *returnOp.operand_type_begin()));
+
+                                  getType(funcAST.getReturnType())));
+      /// *returnOp.operand_type_begin()));
     }
 
     // If this function isn't main, then set the visibility to private.
@@ -252,8 +255,9 @@ private:
     // 'return' takes an optional expression, handle that case here.
     mlir::Value expr = nullptr;
     if (ret.hasExpression()) {
-      if (!(expr = mlirGen(*ret.getExpression())))
+      if (!(expr = mlirGen(*ret.getExpression()))) {
         return mlir::failure();
+      }
     }
 
     // Otherwise, this return operation has zero operands.
@@ -358,6 +362,16 @@ private:
       return builder.create<SubOp>(location, lhs, rhs);
     case mu::ast::enums::BinaryOp::divOp:
       return builder.create<DivOp>(location, lhs, rhs);
+    case mu::ast::enums::BinaryOp::modOp:
+      return builder.create<ModOp>(location, lhs, rhs);
+    case mu::ast::enums::BinaryOp::andOp:
+      return builder.create<AndOp>(location, lhs, rhs);
+    case mu::ast::enums::BinaryOp::orOp:
+      return builder.create<OrOp>(location, lhs, rhs);
+    case mu::ast::enums::BinaryOp::orbOp:
+      return builder.create<OrBoolOp>(location, lhs, rhs);
+    case mu::ast::enums::BinaryOp::andbOp:
+      return builder.create<AndBoolOp>(location, lhs, rhs);
     default:
       break;
     }
@@ -385,14 +399,41 @@ private:
   /// Emit a constant for a single number (FIXME: semantic? broadcast?)
   mlir::Value mlirGen(const mu::ast::ConstantExpression &num) {
     return builder.create<ConstantOp>(loc(num.getLocation()),
-                                      builder.getI32Type(),
+                                      getType(num.getType()),
                                       num.getValueAsInt()); // TODO: Fix
   }
 
   /// Build an MLIR type from a Mu AST variable type (forward to the generic
   /// getType above).
-  [[nodiscard]] auto getType(const mu::ast::enums::Type &type) -> mlir::Type {
-    return builder.getI32Type();
+  [[nodiscard]] auto getType(const mu::ast::enums::Type type) -> mlir::Type {
+    switch (type) {
+    case mu::ast::enums::Type::char_mut:
+      break;
+    case mu::ast::enums::Type::uint8_mut:
+      break;
+    case mu::ast::enums::Type::sint8_mut:
+      break;
+    case mu::ast::enums::Type::uint16_mut:
+      break;
+    case mu::ast::enums::Type::sint16_mut:
+      break;
+    case mu::ast::enums::Type::uint32_mut:
+      break;
+    case mu::ast::enums::Type::sint32_mut:
+      return builder.getI32Type();
+    case mu::ast::enums::Type::uint64_mut:
+      break;
+    case mu::ast::enums::Type::sint64_mut:
+      break;
+    case mu::ast::enums::Type::float32_mut:
+      break;
+    case mu::ast::enums::Type::float64_mut:
+      break;
+    case mu::ast::enums::Type::bool_mut:
+      return builder.getI1Type();
+    }
+
+    llvm_unreachable("unexpected type given to getType()");
   }
 };
 

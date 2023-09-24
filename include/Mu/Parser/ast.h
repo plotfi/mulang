@@ -245,6 +245,14 @@ private:
   VectorRef<T> things;
 };
 
+struct ASTTypeContainer {
+  ASTTypeContainer() = delete;
+  ASTTypeContainer(mu::ast::enums::Type type) : type(type) {}
+  fn getType() const -> mu::ast::enums::Type { return type; }
+private:
+  mu::ast::enums::Type type;
+};
+
 struct Expression : public ASTNode {
   // Expression(const Expression &) = default;
   // Expression(Expression &&) = delete;
@@ -386,8 +394,9 @@ struct ConstantExpression : public Expression {
   ConstantExpression(ConstantExpression &&) = delete;
   ConstantExpression &operator=(const ConstantExpression &) = delete;
   ConstantExpression &operator=(ConstantExpression &&) = delete;
-  ConstantExpression(std::string constant, mu::ast::enums::ConstantType type):
-    constant(constant), type(type) {}
+  ConstantExpression(std::string constant,
+                     mu::ast::enums::ConstantType constantType)
+      : constant(constant), constantType(constantType) {}
   virtual ~ConstantExpression() {}
   fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::Constant;
@@ -404,20 +413,41 @@ struct ConstantExpression : public Expression {
   }
 
   fn getValueAsInt() const -> int32_t {
-    assert((type == mu::ast::enums::ConstantType::Char ||
-            type == mu::ast::enums::ConstantType::IntKind1 ||
-            type == mu::ast::enums::ConstantType::IntKind2 ||
-            type == mu::ast::enums::ConstantType::IntKindHex) &&
+    assert((constantType == mu::ast::enums::ConstantType::Char ||
+            constantType == mu::ast::enums::ConstantType::IntKind1 ||
+            constantType == mu::ast::enums::ConstantType::IntKind2 ||
+            constantType == mu::ast::enums::ConstantType::IntKindHex) &&
            "can not get value as int if it is not integral");
-    if (type == mu::ast::enums::ConstantType::Char) {
+    if (constantType == mu::ast::enums::ConstantType::Char) {
       return constant.c_str()[0];
     }
     return std::stoi(constant);
   }
 
+  fn getConstantType() const -> mu::ast::enums::ConstantType { return constantType; }
+
+  fn getType() const -> mu::ast::enums::Type {
+    switch (constantType) {
+    case mu::ast::enums::ConstantType::IntKindHex:
+      return mu::ast::enums::Type::sint32_mut;
+    case mu::ast::enums::ConstantType::IntKind1:
+      return mu::ast::enums::Type::sint32_mut;
+    case mu::ast::enums::ConstantType::IntKind2:
+      return mu::ast::enums::Type::sint32_mut;
+    case mu::ast::enums::ConstantType::Char:
+      return mu::ast::enums::Type::sint8_mut;
+    case mu::ast::enums::ConstantType::FloatKind1:
+      return mu::ast::enums::Type::float32_mut;
+    case mu::ast::enums::ConstantType::FloatKind2:
+      return mu::ast::enums::Type::float32_mut;
+    case mu::ast::enums::ConstantType::FloatKind3:
+      return mu::ast::enums::Type::float32_mut;
+    }
+  }
+
 private:
   std::string constant;
-  mu::ast::enums::ConstantType type;
+  mu::ast::enums::ConstantType constantType;
 };
 
 struct StringLiteralExpression : public Expression {

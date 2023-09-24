@@ -36,7 +36,7 @@ enum class ASTNodeType {
   InitializationStat,
   ParamDecl,
   DefunDecl,
-  TranslationUnit
+  TranslationUnit,
 };
 
 enum class Type {
@@ -50,7 +50,8 @@ enum class Type {
   uint64_mut,
   sint64_mut,
   float32_mut,
-  float64_mut
+  float64_mut,
+  bool_mut,
 };
 
 enum class ExpressionType {
@@ -83,7 +84,7 @@ enum class BinaryOp {
   xorOp,
   orOp,
   andbOp,
-  orbOp
+  orbOp,
 };
 
 enum class StatementType {
@@ -92,7 +93,7 @@ enum class StatementType {
   IterationWhile,
   JumpReturn,
   Assignment,
-  Initialization
+  Initialization,
 };
 
 enum class ConstantType {
@@ -101,8 +102,8 @@ enum class ConstantType {
   IntKind2,
   Char,
   FloatKind1,
-  FloaKind2,
-  FloatKind3
+  FloatKind2,
+  FloatKind3,
 };
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, ASTNodeType v) {
@@ -196,6 +197,9 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, Type v) {
     break;
   case Type::float64_mut:
     os << "float64_mut";
+    break;
+  case Type::bool_mut:
+    os << "bool_mut";
     break;
   }
   return os;
@@ -344,7 +348,7 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, ConstantType v) {
     case ConstantType::FloatKind1:
       os << "floatkind1";
       break;
-    case ConstantType::FloaKind2:
+    case ConstantType::FloatKind2:
       os << "floatkind2";
       break;
     case ConstantType::FloatKind3:

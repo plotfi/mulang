@@ -90,7 +90,7 @@ def ReturnOp : Mu_Op<"return", [Pure, HasParent<"FuncOp">,
 
   // The return operation takes an optional input operand to return. This
   // value must match the return type of the enclosing function.
-  let arguments = (ins Variadic<Mu_Type>:$input);
+  let arguments = (ins Variadic<Mu_Any>:$input);
 
   // The return operation only emits the input in the format if it is present.
   let assemblyFormat = "($input^ `:` type($input))? attr-dict ";
@@ -323,21 +323,17 @@ def DivOp : Mu_Op<"div", [Pure]> {
   ];
 }
 
-/*
-
-def RemOp : Mu_Op<"rem", [Pure]> {
-  let summary = "Remainder operation for two values.";
+def ModOp : Mu_Op<"mod", [Pure]> {
+  let summary = "Modulo operation for two values.";
   let description = [{
-    The "rem" operation performs remainder between two Mu types.
+    The "mod" operation performs modulo between two Mu types.
   }];
 
   let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
   let results = (outs Mu_Type:$res);
-
   // Indicate that the operation has a custom parser and printer method.
   let hasCustomAssemblyFormat = 1;
-
-  // Allow building a RemOp with from the two input operands.
+  // Allow building a ModOp with from the two input operands.
   let builders = [
     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
   ];
@@ -377,6 +373,41 @@ def OrOp : Mu_Op<"or", [Pure, Commutative]> {
   ];
 }
 
+// TODO: Need to add a bool type to this language.
+def OrBoolOp : Mu_Op<"orb", [Pure, Commutative]> {
+  let summary = "Boolean or operation for two values.";
+  let description = [{
+    The "orb" operation performs boolean or between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Any:$lhs, Mu_Any:$rhs);
+  let results = (outs Mu_Bool:$res);
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building an OrBoolOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+// TODO: Need to add a bool type to this language.
+def AndBoolOp : Mu_Op<"andb" , [Pure, Commutative]> {
+  let summary = "Boolean and operation for two values.";
+  let description = [{
+    The "andb" operation performs boolean and between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Any:$lhs, Mu_Any:$rhs);
+  let results = (outs Mu_Bool:$res);
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building an AndBoolOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+/*
 def XorOp : Mu_Op<"xor", [Pure, Commutative]> {
   let summary = "Xor operation for two values.";
   let description = [{

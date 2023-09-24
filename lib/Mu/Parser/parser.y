@@ -1,6 +1,7 @@
 %{
 #include <cstdio>
 #include <cstdlib>
+#include <unordered_map>
 
 #include "Mu/Parser/ast.h"
 #include "Mu/Parser/yyvaltype.h"
@@ -21,6 +22,23 @@ void yyerror(const char *s);
 #define YYSTYPE void*
 
 mu::ast::TranslationUnit *topnode = nullptr;
+
+// TODO: This is a gross hack for now to sattisfy the Bison's need for void*
+static
+std::unordered_map<mu::ast::enums::Type, mu::ast::ASTTypeContainer*> gASTTypeMap = {
+  { mu::ast::enums::Type::sint8_mut  , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::sint8_mut  ) },
+  { mu::ast::enums::Type::uint8_mut  , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::uint8_mut  ) },
+  { mu::ast::enums::Type::sint16_mut , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::sint16_mut ) },
+  { mu::ast::enums::Type::uint16_mut , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::uint16_mut ) },
+  { mu::ast::enums::Type::sint32_mut , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::sint32_mut ) },
+  { mu::ast::enums::Type::uint32_mut , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::uint32_mut ) },
+  { mu::ast::enums::Type::sint64_mut , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::sint64_mut ) },
+  { mu::ast::enums::Type::uint64_mut , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::uint64_mut ) },
+  { mu::ast::enums::Type::float32_mut, new mu::ast::ASTTypeContainer( mu::ast::enums::Type::float32_mut) },
+  { mu::ast::enums::Type::float64_mut, new mu::ast::ASTTypeContainer( mu::ast::enums::Type::float64_mut) },
+  { mu::ast::enums::Type::bool_mut   , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::bool_mut   ) },
+};
+
 %}
 
 %token VAR FUNCTION
@@ -30,7 +48,7 @@ mu::ast::TranslationUnit *topnode = nullptr;
 %token LE_OP GE_OP EQ_OP NE_OP
 %token IDENTIFIER CONSTANT STRING_LITERAL
 %token TYPE_NAME
-%token CHAR SHORT INT LONG FLOAT DOUBLE USHORT UINT ULONG INT8 UINT8
+%token CHAR SHORT INT LONG FLOAT DOUBLE USHORT UINT ULONG INT8 UINT8 BOOL
 %token IF ELSE WHILE RETURN
 
 %start translation_unit
@@ -66,14 +84,15 @@ mu_function_definition
     var B = std::unique_ptr<CompoundStatement>(
         checked_ptr_cast<CompoundStatement>($8));
     $$ = new Defun(static_cast<YYValType *>($2)->value, std::move(P),
-                   Type::sint32_mut, std::move(B));
+                   static_cast<mu::ast::ASTTypeContainer*>($7)->getType(), std::move(B));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<YYValType *>($2)->linenum);
   }
   | FUNCTION IDENTIFIER '(' ')' PTR_OP  type_specifier compound_statement {
     var B = std::unique_ptr<CompoundStatement>(
         checked_ptr_cast<CompoundStatement>($7));
-    $$ = new Defun(static_cast<YYValType *>($2)->value, Type::sint32_mut,
+    $$ = new Defun(static_cast<YYValType *>($2)->value,
+                   static_cast<mu::ast::ASTTypeContainer*>($6)->getType(),
                    std::move(B));
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<YYValType *>($2)->linenum);
@@ -96,7 +115,8 @@ parameter_list
 
 parameter_declaration
   : IDENTIFIER ':' type_specifier {
-    $$ = new ParamDecl(static_cast<YYValType *>($1)->value, Type::sint32_mut);
+    $$ = new ParamDecl(static_cast<YYValType *>($1)->value,
+                       static_cast<mu::ast::ASTTypeContainer*>($3)->getType());
     checked_ptr_cast<ASTNode>($$)->setLineNumber(
         static_cast<YYValType *>($2)->linenum);
   }
@@ -193,7 +213,7 @@ init_statement
   : VAR IDENTIFIER ':' type_specifier '=' expression ';' {
     $$ = new InitializationStatement(checked_ptr_cast<Expression>($6),
                                      static_cast<YYValType *>($2)->value,
-                                     Type::sint32_mut);
+                                     static_cast<mu::ast::ASTTypeContainer*>($4)->getType());
     checked_ptr_cast<ASTNode>($$)
       ->setLineNumber(static_cast<YYValType *>($2)->linenum);
   }
@@ -201,17 +221,18 @@ init_statement
 
 /*** mu specifiers ***/
 type_specifier
-  : CHAR
-  | UINT8
-  | USHORT
-  | UINT
-  | ULONG
-  | INT8
-  | SHORT
-  | INT
-  | LONG
-  | FLOAT
-  | DOUBLE
+  : CHAR      { $$ = gASTTypeMap[mu::ast::enums::Type::sint8_mut];   }
+  | UINT8     { $$ = gASTTypeMap[mu::ast::enums::Type::uint8_mut];   }
+  | USHORT    { $$ = gASTTypeMap[mu::ast::enums::Type::uint16_mut];  }
+  | UINT      { $$ = gASTTypeMap[mu::ast::enums::Type::uint32_mut];  }
+  | ULONG     { $$ = gASTTypeMap[mu::ast::enums::Type::uint64_mut];  }
+  | INT8      { $$ = gASTTypeMap[mu::ast::enums::Type::sint8_mut];   }
+  | SHORT     { $$ = gASTTypeMap[mu::ast::enums::Type::sint16_mut];  }
+  | INT       { $$ = gASTTypeMap[mu::ast::enums::Type::sint32_mut];  }
+  | LONG      { $$ = gASTTypeMap[mu::ast::enums::Type::sint64_mut];  }
+  | FLOAT     { $$ = gASTTypeMap[mu::ast::enums::Type::float32_mut]; }
+  | DOUBLE    { $$ = gASTTypeMap[mu::ast::enums::Type::float64_mut]; }
+  | BOOL      { $$ = gASTTypeMap[mu::ast::enums::Type::bool_mut];    }
   | TYPE_NAME
   ;
 
@@ -238,7 +259,7 @@ primary_expression
     } else if (tokText == "CONSTANT_FLOAT_KIND1") {
       constantType = mu::ast::enums::ConstantType::FloatKind1;
     } else if (tokText == "CONSTANT_FLOAT_KIND2") {
-      constantType = mu::ast::enums::ConstantType::FloaKind2;
+      constantType = mu::ast::enums::ConstantType::FloatKind2;
     } else if (tokText == "CONSTANT_FLOAT_KIND3") {
       constantType = mu::ast::enums::ConstantType::FloatKind3;
     } else {

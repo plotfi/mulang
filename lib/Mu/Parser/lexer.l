@@ -68,6 +68,7 @@ std::string g_lastLine = "";
 "uint32"               { count(); COPY_YYVAL(g_line, yytext, type_str); return(UINT); }
 "uint64"               { count(); COPY_YYVAL(g_line, yytext, type_str); return(ULONG); }
 "uint16"               { count(); COPY_YYVAL(g_line, yytext, type_str); return(USHORT); }
+"bool"                 { count(); COPY_YYVAL(g_line, yytext, type_str); return(BOOL); }
 
 {L}({L}|{D})*          { count(); COPY_YYVAL(g_line, yytext, identifier_str); return(check_type()); }
 
@@ -81,7 +82,6 @@ L?'(\\.|[^\\'])+'      { count(); COPY_YYVAL(g_line, yytext, constant_char); ret
 {D}+"."{D}*({E})?{FS}? { count(); COPY_YYVAL(g_line, yytext, constant_float_kind3); return(CONSTANT); }
 
 L?\"(\\.|[^\\"])*\"    { count(); COPY_YYVAL(g_line, yytext, strliteral_str); return(STRING_LITERAL); }
-
 ">>"                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(RIGHT_OP); }
 "<<"                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(LEFT_OP); }
 "->"                   { count(); COPY_YYVAL(g_line, yytext, operator_str);  return(PTR_OP); }
