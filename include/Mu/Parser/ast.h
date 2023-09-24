@@ -369,6 +369,8 @@ struct IdentifierExpression : public Expression {
     return node->getKind() == ASTNodeType::IdentifierExpr;
   }
 
+  fn getName() const -> CxxRef<std::string> { return name; }
+
 private:
   std::string name;
 };
@@ -761,7 +763,7 @@ struct ParamDecl : public ASTNode {
     return node->getKind() == ASTNodeType::ParamDecl;
   }
 
-  fn getName() const -> std::string { return name; }
+  fn getName() const -> CxxRef<std::string> { return name; }
   fn getType() const -> Type { return varType; }
 
 private:
@@ -805,7 +807,7 @@ struct Defun : public ASTNode {
     return node->getKind() == ASTNodeType::DefunDecl;
   }
 
-  fn getName() const -> std::string { return name; }
+  fn getName() const -> CxxRef<std::string> { return name; }
   fn getReturnType() const -> Type { return returnType; }
   fn getBody() const -> CxxRef<CompoundStatement> { return *body.get(); }
   fn hasParams() const -> bool { return params.has_value(); }

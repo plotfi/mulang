@@ -6,6 +6,13 @@ all:
 	ninja -C ./build
 	ln -s ./build/compile_commands.json
 
+debug:
+	cmake -G Ninja -B./build . -DCMAKE_BUILD_TYPE=Debug -DMLIR_DIR=$(PREFIX)/lib/cmake/mlir -DLLVM_EXTERNAL_LIT=$(BUILD_DIR)/bin/llvm-lit
+	ninja -C ./build
+	ln -s ./build/compile_commands.json
+
+
+
 run: all
 	./build/muc --emit=ast ./test/test2.mu
 

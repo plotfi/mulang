@@ -23,6 +23,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopedHashTable.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -90,12 +91,26 @@ private:
   /// Entering a function creates a new scope, and the function arguments are
   /// added to the mapping. When the processing of a function is terminated, the
   /// scope is destroyed and the mappings created in this scope are dropped.
-  llvm::ScopedHashTable<StringRef, mlir::Value> symbolTable;
+  llvm::ScopedHashTable<StringRef,
+                        std::pair<mlir::Value, const mu::ast::ParamDecl *>>
+      symbolTable;
+  using SymbolTableScopeT = llvm::ScopedHashTableScope<
+      StringRef, std::pair<mlir::Value, const mu::ast::ParamDecl *>>;
 
   /// Helper conversion for a Mu AST location to an MLIR location.
   mlir::Location loc(const mu::ast::Location &loc) {
     return mlir::FileLineColLoc::get(builder.getStringAttr(loc.file), loc.line,
                                      loc.col);
+  }
+
+  /// Declare a variable in the current scope, return success if the variable
+  /// wasn't declared yet.
+  mlir::LogicalResult declare(const mu::ast::ParamDecl &param,
+                              mlir::Value value) {
+    if (symbolTable.count(param.getName()))
+      return mlir::failure();
+    symbolTable.insert(param.getName(), {value, &param});
+    return mlir::success();
   }
 
   /// Create the prototype for an MLIR function with as many arguments as the
@@ -121,7 +136,7 @@ private:
   /// Emit a new function and add it to the MLIR module.
   mlir::mu::FuncOp mlirGen(const mu::ast::Defun &funcAST) {
     // Create a scope in the symbol table to hold variable declarations.
-    ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
+    SymbolTableScopeT varScope(symbolTable);
 
     // Create an MLIR function for the given prototype.
     builder.setInsertionPointToEnd(theModule.getBody());
@@ -132,16 +147,16 @@ private:
     // Let's start the body of the function now!
     mlir::Block &entryBlock = function.front();
 
-    #if 0
-    auto protoArgs = funcAST.getProto()->getArgs();
-    // Declare all the function arguments in the symbol table.
-    for (const auto nameValue :
-         llvm::zip(protoArgs, entryBlock.getArguments())) {
-      if (failed(declare(std::get<0>(nameValue)->getName(),
-                         std::get<1>(nameValue))))
-        return nullptr;
+    if (funcAST.hasParams()) {
+      auto &protoArgs = funcAST.getParams();
+
+      // Declare all the function arguments in the symbol table.
+      for (const auto nameValue :
+      llvm::zip(protoArgs, entryBlock.getArguments())) {
+        if (failed(declare(*std::get<0>(nameValue), std::get<1>(nameValue))))
+          return nullptr;
+      }
     }
-    #endif
 
     // Set the insertion point in the builder to the beginning of the function
     // body, it will be used throughout the codegen to create operations in this
@@ -214,6 +229,8 @@ private:
       return mlirGen(cast<mu::ast::BinaryExpression>(expr));
     case mu::ast::enums::ExpressionType::Constant:
       return mlirGen(cast<mu::ast::ConstantExpression>(expr));
+    case mu::ast::enums::ExpressionType::Identifier:
+      return mlirGen(cast<mu::ast::IdentifierExpression>(expr));
     default:
       std::string str;
       llvm::raw_string_ostream sstr(str);
@@ -292,6 +309,18 @@ private:
     emitError(location, "invalid binary operator '") << str << "'";
 
     llvm_unreachable(str.c_str());
+  }
+
+  /// This is a reference to a variable in an expression. The variable is
+  /// expected to have been declared and so should have a value in the symbol
+  /// table, otherwise emit an error and return nullptr.
+  mlir::Value mlirGen(const mu::ast::IdentifierExpression &expr) {
+    if (auto variable = symbolTable.lookup(expr.getName()).first)
+      return variable;
+
+    emitError(loc(expr.getLocation()), "error: unknown variable '")
+        << expr.getName() << "'";
+    return nullptr;
   }
 
   /// Emit a constant for a single number (FIXME: semantic? broadcast?)
