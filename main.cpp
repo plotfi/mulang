@@ -86,6 +86,11 @@ fn parseInputFile(llvm::StringRef filename)
     }
   };
 
+  if (nullptr == yyin) {
+    llvm::errs() << "File not found: " << filename << "\n";
+    exit(EXIT_FAILURE);
+  }
+
   // Bison is gross, especially GNU Bison 2.3 on macOS where global yyin is the
   // input to yyparse()
   assert(yyin != nullptr && topnode == nullptr && "Test pre-parse pointers.");
@@ -117,6 +122,13 @@ fn dumpMLIR() -> int {
   // Handle '.mu' input to the compiler.
   if (inputType != InputType::MLIR &&
       !llvm::StringRef(inputFilename).endswith(".mlir")) {
+
+    if (!llvm::StringRef(inputFilename).endswith(".mu")) {
+      llvm::errs() << "Invalid filetype: " << inputFilename << "\n";
+      llvm::errs() << "Files given to muc must end in .mu\n";
+      exit(EXIT_FAILURE);
+    }
+
     auto moduleAST = parseInputFile(inputFilename);
     if (!moduleAST)
       return 6;
