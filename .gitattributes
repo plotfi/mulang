@@ -1,1 +1,2 @@
-*.mu linguist-language=mulang linguist-detectable
+*.mu linguist-language=rust linguist-detectable linguist-color-override=0xff00ff linguist-name-override=mulang
+
