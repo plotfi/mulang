@@ -486,6 +486,11 @@ struct ParenthesisExpression : public Expression {
   fn virtual getExpressionKind() const -> ExpressionType override {
     return ExpressionType::Parenthesis;
   }
+
+  fn getInternalExpression() const -> CxxRef<Expression> {
+    return *innerExpr.get();
+  }
+
   fv virtual dumpInternal(unsigned indent = 0) const override {
     llvm::errs() << "(" << getKind() << " ";
     innerExpr->dump(indent + 1);

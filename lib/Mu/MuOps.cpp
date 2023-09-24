@@ -149,6 +149,23 @@ mlir::ParseResult InvertOp::parse(mlir::OpAsmParser &parser,
 void InvertOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 
 //===----------------------------------------------------------------------===//
+// ParenOp
+//===----------------------------------------------------------------------===//
+
+void ParenOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value innerValue) {
+  state.addTypes(innerValue.getType());
+  state.addOperands({innerValue});
+}
+
+mlir::ParseResult ParenOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void ParenOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+//===----------------------------------------------------------------------===//
 // AddOp
 //===----------------------------------------------------------------------===//
 

@@ -239,6 +239,29 @@ def InvertOp : Mu_Op<"invert", [Pure]> {
 }
 
 //===----------------------------------------------------------------------===//
+// ParenOp
+//===----------------------------------------------------------------------===//
+
+def ParenOp : Mu_Op<"paren", [Pure]> {
+  let summary = "paren operation";
+  let description = [{
+    The "paren" operation passes any value through, it just helps set operator
+    precedents.
+  }];
+
+  let arguments = (ins Mu_Type:$value);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+
+  // Allow building an ParenOp from one input expr
+  let builders = [
+    OpBuilder<(ins "Value":$innerExpr)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
 // AddOp
 //===----------------------------------------------------------------------===//
 

@@ -274,6 +274,8 @@ private:
       return mlirGen(cast<mu::ast::ConstantExpression>(expr));
     case mu::ast::enums::ExpressionType::Identifier:
       return mlirGen(cast<mu::ast::IdentifierExpression>(expr));
+    case mu::ast::enums::ExpressionType::Parenthesis:
+      return mlirGen(cast<mu::ast::ParenthesisExpression>(expr));
     default:
       std::string str;
       llvm::raw_string_ostream sstr(str);
@@ -283,6 +285,16 @@ private:
           << str << "' expression.";
       return nullptr;
     }
+  }
+
+  /// Emit a paren operation
+  mlir::Value mlirGen(const mu::ast::ParenthesisExpression &parenExpr) {
+    mlir::Value innerValue = mlirGen(parenExpr.getInternalExpression());
+    auto location = loc(parenExpr.getLocation());
+    if (!innerValue) {
+      return nullptr;
+    }
+    return builder.create<ParenOp>(location, innerValue);
   }
 
   /// Emit a unary operation
