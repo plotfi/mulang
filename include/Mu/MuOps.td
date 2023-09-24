@@ -305,4 +305,160 @@ def MulOp : Mu_Op<"mul", [Pure, Commutative]> {
   ];
 }
 
+def DivOp : Mu_Op<"div", [Pure]> {
+  let summary = "Divide operation for two values.";
+  let description = [{
+    The "div" operation performs division between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+
+  // Allow building a DivOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+/*
+
+def RemOp : Mu_Op<"rem", [Pure]> {
+  let summary = "Remainder operation for two values.";
+  let description = [{
+    The "rem" operation performs remainder between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+
+  // Allow building a RemOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+def AndOp : Mu_Op<"and", [Pure, Commutative]> {
+  let summary = "And operation for two values.";
+  let description = [{
+    The "and" operation performs bitwise and between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building an AndOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+def OrOp : Mu_Op<"or", [Pure, Commutative]> {
+  let summary = "Or operation for two values.";
+  let description = [{
+    The "or" operation performs bitwise or between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building an OrOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+def XorOp : Mu_Op<"xor", [Pure, Commutative]> {
+  let summary = "Xor operation for two values.";
+  let description = [{
+    The "xor" operation performs bitwise xor between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building an XorOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+def ShlOp : Mu_Op<"shl", [Pure]> {
+  let summary = "Shift left operation for two values.";
+  let description = [{
+    The "shl" operation performs bitwise shift left between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building a ShlOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+def ShrOp : Mu_Op<"shr", [Pure]> {
+  let summary = "Shift right operation for two values.";
+  let description = [{
+    The "shr" operation performs bitwise shift right between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building a ShrOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+def UShrOp : Mu_Op<"ushr", [Pure]> {
+  let summary = "Unsigned shift right operation for two values.";
+  let description = [{
+    The "ushr" operation performs bitwise unsigned shift right between two Mu
+    types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building a UShrOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+*/
+
+def SubOp : Mu_Op<"sub", [Pure]> {
+  let summary = "Subtract operation for two values.";
+  let description = [{
+    The "sub" operation performs subtraction between two Mu types.
+  }];
+
+  let arguments = (ins Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Type:$res);
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+  // Allow building a SubOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
 #endif // MU_OPS

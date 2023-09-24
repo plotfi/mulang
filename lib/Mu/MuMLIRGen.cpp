@@ -354,6 +354,10 @@ private:
       return builder.create<AddOp>(location, lhs, rhs);
     case  mu::ast::enums::BinaryOp::mulOp:
       return builder.create<MulOp>(location, lhs, rhs);
+    case mu::ast::enums::BinaryOp::subOp:
+      return builder.create<SubOp>(location, lhs, rhs);
+    case mu::ast::enums::BinaryOp::divOp:
+      return builder.create<DivOp>(location, lhs, rhs);
     default:
       break;
     }

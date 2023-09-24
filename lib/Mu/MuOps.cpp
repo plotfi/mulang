@@ -10,6 +10,7 @@
 #include "Mu/MuDialect.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/Interfaces/FunctionImplementation.h"
+#include "mlir/Support/LogicalResult.h"
 
 #define GET_OP_CLASSES
 #include "Mu/MuOps.cpp.inc"
@@ -199,6 +200,43 @@ mlir::ParseResult MulOp::parse(mlir::OpAsmParser &parser,
 }
 
 void MulOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+//===----------------------------------------------------------------------===//
+// SubOp
+//===----------------------------------------------------------------------===//
+
+void SubOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(lhs.getType());
+  state.addOperands({lhs, rhs});
+}
+
+mlir::ParseResult SubOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void SubOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+//===----------------------------------------------------------------------===//
+// DivOp
+//===----------------------------------------------------------------------===//
+
+void DivOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(lhs.getType());
+  state.addOperands({lhs, rhs});
+}
+
+mlir::ParseResult DivOp::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void DivOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+
+
 
 } // namespace mu
 } // namespace mlir
