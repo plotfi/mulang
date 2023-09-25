@@ -124,6 +124,7 @@ fn dumpMLIR() -> int {
       !llvm::StringRef(inputFilename).endswith(".mlir")) {
 
     if (!llvm::StringRef(inputFilename).endswith(".mu") &&
+        !llvm::StringRef(inputFilename).endswith(".mulang") &&
         !llvm::StringRef(inputFilename).endswith(".\342\232\233")) {
       llvm::errs() << "Invalid filetype: " << inputFilename << "\n";
       llvm::errs() << "Files given to muc must end in .mu or .⚛️\n";
