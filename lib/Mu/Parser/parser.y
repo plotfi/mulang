@@ -23,7 +23,7 @@ void yyerror(const char *s);
 
 mu::ast::TranslationUnit *topnode = nullptr;
 
-// TODO: This is a gross hack for now to sattisfy the Bison's need for void*
+// TODO: This is a gross hack for now to satisfy Bison
 static
 std::unordered_map<mu::ast::enums::Type, mu::ast::ASTTypeContainer*> gASTTypeMap = {
   { mu::ast::enums::Type::sint8_mut  , new mu::ast::ASTTypeContainer( mu::ast::enums::Type::sint8_mut  ) },
