@@ -35,6 +35,52 @@ fn cnd(X: float32) -> float32 {
   return dCND;
 }
 
+fn fact(n: int32) -> float32 {
+  var result: float32 = 1.0;
+  var i: int32 = 1;
+  while i <= n {
+    result = result * i;
+    i = i + 1;
+  }
+  return result;
+}
+
+fn pow(x: float32, n: int32) -> float32 {
+  var result: float32 = 1.0;
+  var i: int32 = 1;
+  while i <= n {
+    result = result * x;
+    i = i + 1;
+  }
+  return result;
+}
+
+fn qnorm(x: float32) -> float32 {
+  var result: float32 = 0.0;
+  var term: float32 = x;
+  var termSquared: float32 = term * term;
+  var i: int32 = 1;
+  while term != result {
+    result = term;
+    term = term + pow(x, i) / fact(i);
+    i = i + 1;
+  }
+  return result;
+}
+
+fn phi(x: float32) -> float32 {
+  var result: float32 = 0.0;
+  var term: float32 = x;
+  var termSquared: float32 = term * term;
+  var i: int32 = 1;
+  while term != result {
+    result = term;
+    term = term + pow(x, i) / fact(i);
+    i = i + 1;
+  }
+  return result;
+}
+
 fn main() -> int32 {
   var S: float32 = 100.0;
   var X: float32 = 100.0;
@@ -74,7 +120,7 @@ fn sqrt(x: float32) -> float32 {
   var term: float32 = x;
   var termSquared: float32 = term * term;
   var i: int32 = 1;
-  while (term != result) {
+  while term != result {
     result = term;
     term = (termSquared + x) / (2.0 * term);
     termSquared = term * term;
@@ -87,7 +133,7 @@ fn exp(x: float32) -> float32 {
   var result: float32 = 0.0;
   var term: float32 = 1.0;
   var i: int32 = 1;
-  while (term != result) {
+  while term != result {
     result = term;
     term = term + pow(x, i) / fact(i);
     i = i + 1;

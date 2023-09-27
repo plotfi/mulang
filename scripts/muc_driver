@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ "$#" -ne 2 ]; then
+    echo "$0: incorrect parameter count"
+    exit 0
+fi
+
+cat $2 | clang -E -o - - | sed 's/#/\/\//g' > tmp.mu
+
+$(dirname "$0")/muc $1 tmp.mu
+rm tmp.mu
