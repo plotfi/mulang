@@ -594,6 +594,7 @@ struct CompoundStatement : public Statement {
 
   auto begin() const { return statements.value()->begin(); }
   auto end() const { return statements.value()->end(); }
+  auto empty() const { return !statements.has_value(); }
 
   static bool classof(const ASTNode *node) {
     return node->getKind() == ASTNodeType::CompoundStat;
@@ -644,6 +645,10 @@ struct SelectionIfStatement : public Statement {
   static bool classof(const ASTNode *node) {
     return node->getKind() == ASTNodeType::SelectIfStat;
   }
+
+  fn getCondition() const -> Ref<Expression> { return expr; }
+
+  fn getBody() const -> Ref<CompoundStatement> { return ifBranch; }
 
 private:
   Ref<Expression> expr;
