@@ -9,6 +9,8 @@
 #include "Mu/MuDialect.h"
 #include "Mu/MuOps.h"
 #include "Mu/MuTypes.h"
+#include "mlir/Support/LogicalResult.h"
+#include "llvm/Support/Casting.h"
 
 using namespace mlir;
 using namespace mlir::mu;
@@ -33,7 +35,11 @@ namespace mu {
 mlir::LogicalResult ReturnOp::verify() {
   // We know that the parent operation is a function, because of the 'HasParent'
   // trait attached to the operation definition.
-  auto function = cast<FuncOp>((*this)->getParentOp());
+  auto function = llvm::dyn_cast_or_null<FuncOp>((*this)->getParentOp());
+
+  if (!function) {
+    return mlir::success();
+  }
 
   /// ReturnOps can only have a single optional operand.
   if (getNumOperands() > 1)
@@ -60,6 +66,11 @@ mlir::LogicalResult ReturnOp::verify() {
   return emitError() << "type of return operand (" << inputType
                      << ") doesn't match function result type (" << resultType
                      << ")";
+}
+
+
+mlir::LogicalResult BreakOp::verify() {
+  return mlir::success();
 }
 
 } // namespace  mu

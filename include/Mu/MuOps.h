@@ -16,6 +16,7 @@
 #include "mlir/Interfaces/FunctionInterfaces.h"
 #include "mlir/Interfaces/InferTypeOpInterface.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
+#include "mlir/Interfaces/ControlFlowInterfaces.h"
 
 #define GET_OP_CLASSES
 #include "Mu/MuOps.h.inc"

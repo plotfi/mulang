@@ -88,6 +88,7 @@ target_link_libraries(muc
     MLIRParser
     MLIRSideEffectInterfaces
     MLIRTransforms
+    MLIRControlFlowInterfaces
     ${LIBS})
 
 add_subdirectory(test)

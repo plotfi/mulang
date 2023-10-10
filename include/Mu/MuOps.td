@@ -13,6 +13,7 @@ include "Mu/MuTypes.td"
 include "mlir/Interfaces/FunctionInterfaces.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/Interfaces/ControlFlowInterfaces.td"
 
 //===----------------------------------------------------------------------===//
 // Mu Operations
@@ -71,8 +72,7 @@ def FuncOp : Mu_Op<"func", [
   let skipDefaultBuilders = 1;
 }
 
-def ReturnOp : Mu_Op<"return", [Pure, HasParent<"FuncOp">,
-                                 Terminator]> {
+def ReturnOp : Mu_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>, Terminator]> {
   let summary = "return operation";
   let description = [{
     The "return" operation represents a return operation within a function.
@@ -104,6 +104,24 @@ def ReturnOp : Mu_Op<"return", [Pure, HasParent<"FuncOp">,
   let extraClassDeclaration = [{
     bool hasOperand() { return getNumOperands() != 0; }
   }];
+
+  // Indicate that additional verification for this operation is necessary.
+  let hasVerifier = 1;
+}
+
+def BreakOp : Mu_Op<"break", [Pure, ParentOneOf<["IfOp"]>, Terminator]> {
+  let summary = "break operation";
+  let description = [{
+    The "break" operation represents a break operation within a function.
+    The operation takes an optional operand and produces no results.
+    The operand type must match the signature of the function that contains
+    the operation.The break op is internal to MLIR Mu to satisfy the requirement
+    of the IfOp and WhileOp terminator.
+  }];
+
+  // Allow building a BreakOp with no return operand.
+  let builders = [
+  ];
 
   // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
@@ -489,6 +507,23 @@ def SubOp : Mu_Op<"sub", [Pure]> {
   // Allow building a SubOp with from the two input operands.
   let builders = [
     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+def IfOp : Mu_Op<"if", [  DeclareOpInterfaceMethods<RegionBranchOpInterface> ]> {
+  let summary = "if operation";
+  let description = [{
+    The "if" operation is a conditional branch operation. It takes a condition
+    and one regions. The region is taken as the true branch. The condition must
+    be a boolean type.
+  }];
+
+  let arguments = (ins Mu_Bool:$cond);
+  let regions = (region AnyRegion:$true_branch);
+  let skipDefaultBuilders = 1;
+
+  let builders = [
+    OpBuilder<(ins "Value":$cond)>
   ];
 }
 

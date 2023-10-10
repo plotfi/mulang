@@ -11,6 +11,7 @@
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/Interfaces/FunctionImplementation.h"
 #include "mlir/Support/LogicalResult.h"
+#include "mlir/IR/OpDefinition.h"
 
 #define GET_OP_CLASSES
 #include "Mu/MuOps.cpp.inc"
@@ -320,6 +321,57 @@ mlir::ParseResult AndBoolOp::parse(mlir::OpAsmParser &parser,
 
 void AndBoolOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 
+
+///===---------------------------------------------------------------------===//
+/// IfOp
+/// ===--------------------------------------------------------------------===//
+
+
+
+void IfOp::getSuccessorRegions(RegionBranchPoint point,
+                               SmallVectorImpl<RegionSuccessor> &regions) {
+  // assert((point.isParent() || point == getRegion()) && "expected loop region");
+  // // The loop may typically branch back to its body or to the parent operation.
+  // // If the predecessor is the parent op and the trip count is known to be at
+  // // least one, branch into the body using the iterator arguments. And in cases
+  // // we know the trip count is zero, it can only branch back to its parent.
+  // std::optional<uint64_t> tripCount = getTrivialConstantTripCount(*this);
+  // if (point.isParent() && tripCount.has_value()) {
+  //   if (tripCount.value() > 0) {
+  //     regions.push_back(RegionSuccessor(&getRegion(), getRegionIterArgs()));
+  //     return;
+  //   }
+  //   if (tripCount.value() == 0) {
+  //     regions.push_back(RegionSuccessor(getResults()));
+  //     return;
+  //   }
+  // }
+
+  // // From the loop body, if the trip count is one, we can only branch back to
+  // // the parent.
+  // if (!point.isParent() && tripCount && *tripCount == 1) {
+  //   regions.push_back(RegionSuccessor(getResults()));
+  //   return;
+  // }
+
+  // // In all other cases, the loop may branch back to itself or the parent
+  // // operation.
+  // regions.push_back(RegionSuccessor(&getRegion(), getRegionIterArgs()));
+  // regions.push_back(RegionSuccessor(getResults()));
+}
+
+
+/// Builds a terminator operation without relying on OpBuilder APIs to avoid
+/// cyclic header inclusion.
+
+void IfOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                 // TypeRange resultTypes,
+                 mlir::Value cond) {
+  state.addOperands(cond);
+  OpBuilder::InsertionGuard guard(builder);
+  Region *region = state.addRegion();
+  builder.createBlock(region);
+}
 
 } // namespace mu
 } // namespace mlir

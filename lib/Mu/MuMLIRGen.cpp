@@ -28,6 +28,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <numeric>
+#include <stack>
 
 #include "Mu/MuDialect.h"
 #include "Mu/MuMLIRGen.h"
@@ -190,14 +191,19 @@ private:
     }
 
     // If this function isn't main, then set the visibility to private.
-    if (funcAST.getName() != "main")
+    if (funcAST.getName() != "main") {
       function.setPrivate();
+    }
 
     return function;
   }
 
   /// Codegen a list of expression, return failure if one of them hit an error.
   mlir::LogicalResult mlirGen(const mu::ast::CompoundStatement &body) {
+    if (body.empty()) {
+      return mlir::success();
+    }
+
     for (const auto stmt : body) {
       if (const auto s = dyn_cast<mu::ast::JumpReturnStatement>(stmt);
         s && mlirGen(*s).failed()) {
@@ -205,11 +211,47 @@ private:
       } else if (const auto s = dyn_cast<ast::InitializationStatement>(stmt);
                  s && mlirGen(*s).failed()) {
         return mlir::failure();
+      } else if (const auto s = dyn_cast<ast::SelectionIfStatement>(stmt);
+                 s && mlirGen(*s).failed()) {
+        return mlir::failure();
       }
     }
     return mlir::success();
   }
 
+  mlir::LogicalResult mlirGen(const mu::ast::SelectionIfStatement &ifStmt) {
+    auto location = loc(ifStmt.getLocation());
+    auto cond = ifStmt.getCondition();
+    auto body = ifStmt.getBody();
+
+    mlir::Value mCond = mlirGen(*cond);
+    if (!mCond) {
+      return mlir::failure();
+    }
+
+    auto prevBlock = builder.getInsertionBlock();
+
+    mlir::mu::IfOp ifOp = builder.create<IfOp>(location, mCond);
+    mlir::Block &IfEntryBlock = ifOp.getTrueBranch().front();
+    builder.setInsertionPointToStart(&IfEntryBlock);
+
+    // Emit the body of the function.
+    if (mlir::failed(mlirGen(*body))) {
+      return mlir::failure();
+    }
+
+    if (IfEntryBlock.getOperations().size() == 0) {
+      builder.create<BreakOp>(location);
+    } else if (auto returnOp =
+               dyn_cast<ReturnOp>(IfEntryBlock.getOperations().back())) {
+      // mlirGen already handles the case where the last operation is a sentinel
+    } else {
+      assert(false && "unexpected sentinel in if block");
+    }
+
+    builder.setInsertionPointToEnd(prevBlock);
+    return mlir::success();
+  }
 
   /// Handle a variable declaration, we'll codegen the expression that forms the
   /// initializer and record the value in the symbol table before returning it.
