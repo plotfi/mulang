@@ -138,9 +138,9 @@ void comment2() {
   while (true) {
     while ((c = YYINPUT()) != '\n' && c != 0) {
       // putchar(c)
-      if (c == '\n') {
-        g_line++;
-      }
+    }
+    if (c == '\n') {
+      g_line++;
     }
     break;
   }
