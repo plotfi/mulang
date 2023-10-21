@@ -5,7 +5,7 @@ DEBUG_BUILD_DIR:=$(LLVM_DIR)/debug
 DEBUG_PREFIX:=$(LLVM_DIR)/destdebugdir
 
 all:
-	cmake -G Ninja -B./build . -DMLIR_DIR=$(PREFIX)/lib/cmake/mlir -DLLVM_EXTERNAL_LIT=$(BUILD_DIR)/bin/llvm-lit
+	cmake -G Ninja -B./build . -DMLIR_DIR=$(PREFIX)/lib/cmake/mlir -DLLVM_EXTERNAL_LIT=$(BUILD_DIR)/bin/llvm-lit -DCMAKE_CXX_COMPILER=clang++
 	ninja -C ./build
 	cp ./scripts/muc_driver ./build/bin
 	rm -f compile_commands.json

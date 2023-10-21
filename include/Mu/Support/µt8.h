@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <vector>
 #include <optional>
+#include <functional>
 
 #define fn [[nodiscard]] auto
 #define fv void
