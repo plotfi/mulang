@@ -17,6 +17,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/BuiltinTypes.h"
+#include "mlir/IR/Diagnostics.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Types.h"
 #include "mlir/IR/Verifier.h"
@@ -224,6 +225,12 @@ private:
     auto cond = ifStmt.getCondition();
     auto body = ifStmt.getBody();
 
+    // if (ifStmt.hasElseBranch()) {
+    //   auto locationElse = loc(ifStmt.getElseBranch()->getLocation());
+    //   mlir::emitError(locationElse, "No if else currently supported");
+    //   return mlir::failure();
+    // }
+
     mlir::Value mCond = mlirGen(*cond);
     if (!mCond) {
       return mlir::failure();
@@ -231,11 +238,34 @@ private:
 
     auto prevBlock = builder.getInsertionBlock();
 
+    if (ifStmt.hasElseBranch()) {
+      auto elseBranchBody = ifStmt.getElseBranch();
+      mlir::mu::IfElseOp ifElseOp = builder.create<IfElseOp>(location, mCond);
+
+      // Emit the body of the true branch.
+      mlir::Block &IfEntryBlock = ifElseOp.getTrueBranch().front();
+      builder.setInsertionPointToStart(&IfEntryBlock);
+      if (mlir::failed(mlirGen(*body))) {
+        return mlir::failure();
+      }
+
+      // Emit the body of the true branch.
+      mlir::Block &ElseEntryBlock = ifElseOp.getFalseBranch().front();
+      builder.setInsertionPointToStart(&ElseEntryBlock);
+      if (mlir::failed(mlirGen(*elseBranchBody))) {
+        return mlir::failure();
+      }
+
+      ifElseOp.dump();
+
+      return mlir::success();
+    }
+
     mlir::mu::IfOp ifOp = builder.create<IfOp>(location, mCond);
+
+    // Emit the body of the true branch.
     mlir::Block &IfEntryBlock = ifOp.getTrueBranch().front();
     builder.setInsertionPointToStart(&IfEntryBlock);
-
-    // Emit the body of the function.
     if (mlir::failed(mlirGen(*body))) {
       return mlir::failure();
     }

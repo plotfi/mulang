@@ -527,4 +527,21 @@ def IfOp : Mu_Op<"if", [  DeclareOpInterfaceMethods<RegionBranchOpInterface> ]> 
   ];
 }
 
+def IfElseOp : Mu_Op<"ifelse", [  DeclareOpInterfaceMethods<RegionBranchOpInterface> ]> {
+  let summary = "ifelse operation";
+  let description = [{
+    The "ifelse" operation is a conditional branch operation. It takes a condition
+    and two regions. The first region is taken as the true branch, the second
+    region is taken as the false branch. The condition must be a boolean type.
+  }];
+
+  let arguments = (ins Mu_Bool:$cond);
+  let regions = (region AnyRegion:$true_branch, AnyRegion:$false_branch);
+  let skipDefaultBuilders = 1;
+
+  let builders = [
+    OpBuilder<(ins "Value":$cond)>
+  ];
+}
+
 #endif // MU_OPS

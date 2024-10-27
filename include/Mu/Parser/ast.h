@@ -650,6 +650,9 @@ struct SelectionIfStatement : public Statement {
 
   fn getBody() const -> Ref<CompoundStatement> { return ifBranch; }
 
+  fn hasElseBranch() const -> bool { return elseBranch.has_value(); }
+  fn getElseBranch() const -> Ref<CompoundStatement> { return elseBranch.value(); }
+
 private:
   Ref<Expression> expr;
   Ref<CompoundStatement> ifBranch;

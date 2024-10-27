@@ -373,5 +373,20 @@ void IfOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
   builder.createBlock(region);
 }
 
+void IfElseOp::getSuccessorRegions(RegionBranchPoint point,
+                                   SmallVectorImpl<RegionSuccessor> &regions) {
+}
+
+
+/// Builds a terminator operation without relying on OpBuilder APIs to avoid
+/// cyclic header inclusion.
+void IfElseOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                     mlir::Value cond) {
+  state.addOperands(cond);
+  OpBuilder::InsertionGuard guard(builder);
+  Region *region = state.addRegion();
+  builder.createBlock(region);
+}
+
 } // namespace mu
 } // namespace mlir
