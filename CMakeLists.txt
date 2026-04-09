@@ -37,6 +37,13 @@ endif()
 
 set(MU_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 set(MU_BINARY_DIR ${PROJECT_BINARY_DIR})
+
+# When building out-of-tree against an installed LLVM, test tools like FileCheck
+# may only exist in the LLVM build directory. Allow specifying that path.
+set(LLVM_EXTERNAL_TOOLS_DIR "" CACHE PATH "Path to LLVM build bin dir containing FileCheck, count, not")
+if(LLVM_EXTERNAL_LIT AND NOT LLVM_EXTERNAL_TOOLS_DIR)
+  get_filename_component(LLVM_EXTERNAL_TOOLS_DIR "${LLVM_EXTERNAL_LIT}" DIRECTORY)
+endif()
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${MLIR_INCLUDE_DIRS})
 include_directories(${MU_SOURCE_DIR})

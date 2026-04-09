@@ -34,6 +34,12 @@ config.substitutions.append(("%shlibext", config.llvm_shlib_ext))
 
 llvm_config.with_system_environment(["HOME", "INCLUDE", "LIB", "TMP", "TEMP"])
 
+# When building out-of-tree against an installed LLVM, test tools like FileCheck
+# may only exist in the LLVM build directory, not the install directory.
+if hasattr(config, 'llvm_external_tools_dir') and config.llvm_external_tools_dir:
+    if not os.path.exists(os.path.join(config.llvm_tools_dir, 'FileCheck')):
+        config.llvm_tools_dir = config.llvm_external_tools_dir
+
 llvm_config.use_default_substitutions()
 
 # excludes: A list of directories to exclude from the testsuite. The 'Inputs'
@@ -52,6 +58,8 @@ config.substitutions.append(("%mu_libs", config.mu_libs_dir))
 llvm_config.with_environment("PATH", config.llvm_tools_dir, append_path=True)
 
 tool_dirs = [config.mu_tools_dir, config.llvm_tools_dir]
+if hasattr(config, 'llvm_external_tools_dir') and config.llvm_external_tools_dir:
+    tool_dirs.append(config.llvm_external_tools_dir)
 tools = [
     "mlir-opt",
     "muc",

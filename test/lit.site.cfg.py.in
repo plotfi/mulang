@@ -1,6 +1,7 @@
 @LIT_SITE_CFG_IN_HEADER@
 
 config.llvm_tools_dir = lit_config.substitute("@LLVM_TOOLS_DIR@")
+config.llvm_external_tools_dir = "@LLVM_EXTERNAL_TOOLS_DIR@"
 config.mlir_obj_dir = "@MLIR_BINARY_DIR@"
 config.mu_obj_root = "@MU_BINARY_DIR@"
 config.llvm_shlib_ext = "@SHLIBEXT@"
