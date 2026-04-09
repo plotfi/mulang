@@ -5,7 +5,12 @@ configure_lit_site_cfg(
         ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.py
 )
 
-set(MU_TEST_DEPENDS FileCheck count not)
+set(MU_TEST_DEPENDS)
+foreach(_dep FileCheck count not)
+  if(TARGET ${_dep})
+    list(APPEND MU_TEST_DEPENDS ${_dep})
+  endif()
+endforeach()
 
 add_lit_testsuite(check-mu "Running the mu regression tests"
                   ${CMAKE_CURRENT_BINARY_DIR}

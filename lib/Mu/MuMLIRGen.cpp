@@ -131,7 +131,7 @@ private:
       }
     }
 
-    auto funcType = builder.getFunctionType(argTypes, std::nullopt);
+    auto funcType = builder.getFunctionType(argTypes, mlir::TypeRange{});
     return builder.create<mlir::mu::FuncOp>(location, funcAST.getName(),
                                             funcType);
   }

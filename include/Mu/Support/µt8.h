@@ -17,9 +17,17 @@
 #define let const auto
 #define var auto
 typealias uint = unsigned;
+#ifdef __clang__
 template <typename T> using Ref = const T *_Nonnull;
+#else
+template <typename T> using Ref = const T *;
+#endif
 template <typename T> using CxxRef = const T &;
+#ifdef __clang__
 template <typename T> using MutableRef = T *_Nonnull;
+#else
+template <typename T> using MutableRef = T *;
+#endif
 template <typename T> using VectorRef = std::vector<Ref<T>>;
 template <typename T> using OptionalRef = std::optional<Ref<T>>;
 template <typename T> using OptionalOwnedRef =

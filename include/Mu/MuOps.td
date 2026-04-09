@@ -97,7 +97,7 @@ def ReturnOp : Mu_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>, Terminato
 
   // Allow building a ReturnOp with no return operand.
   let builders = [
-    OpBuilder<(ins), [{ build($_builder, $_state, std::nullopt); }]>
+    OpBuilder<(ins), [{ build($_builder, $_state, ::mlir::ValueRange{}); }]>
   ];
 
   // Provide extra utility definitions on the c++ operation class definition.
