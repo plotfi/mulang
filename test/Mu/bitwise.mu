@@ -2,11 +2,20 @@
 
 // CHECK: module {
 // CHECK-NEXT:   mu.func private @bitwise(%arg0: i32) -> i32 {
+// CHECK-NEXT:     %alloca = memref.alloca() : memref<i32>
+// CHECK-NEXT:     memref.store %arg0, %alloca[] : memref<i32>
 // CHECK-NEXT:     %0 = mu.mlir.constant(42 : i32) : i32
+// CHECK-NEXT:     %alloca_0 = memref.alloca() : memref<i32>
+// CHECK-NEXT:     memref.store %0, %alloca_0[] : memref<i32>
 // CHECK-NEXT:     %1 = mu.mlir.constant(2 : i32) : i32
-// CHECK-NEXT:     %2 = mu.and %0, %1 : i32
-// CHECK-NEXT:     %3 = mu.or %arg0, %2 : i32
-// CHECK-NEXT:     mu.return %3 : i32
+// CHECK-NEXT:     %alloca_1 = memref.alloca() : memref<i32>
+// CHECK-NEXT:     memref.store %1, %alloca_1[] : memref<i32>
+// CHECK-NEXT:     %2 = memref.load %alloca[] : memref<i32>
+// CHECK-NEXT:     %3 = memref.load %alloca_0[] : memref<i32>
+// CHECK-NEXT:     %4 = memref.load %alloca_1[] : memref<i32>
+// CHECK-NEXT:     %5 = mu.and %3, %4 : i32
+// CHECK-NEXT:     %6 = mu.or %2, %5 : i32
+// CHECK-NEXT:     mu.return %6 : i32
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
 
