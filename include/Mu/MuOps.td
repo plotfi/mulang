@@ -24,7 +24,7 @@ include "mlir/Interfaces/ControlFlowInterfaces.td"
 //===----------------------------------------------------------------------===//
 
 def FuncOp : Mu_Op<"func", [
-    FunctionOpInterface, IsolatedFromAbove
+    AutomaticAllocationScope, FunctionOpInterface, IsolatedFromAbove
   ]> {
   let summary = "user defined function operation";
   let description = [{
@@ -72,7 +72,7 @@ def FuncOp : Mu_Op<"func", [
   let skipDefaultBuilders = 1;
 }
 
-def ReturnOp : Mu_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>, Terminator]> {
+def ReturnOp : Mu_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp", "IfElseOp"]>, Terminator]> {
   let summary = "return operation";
   let description = [{
     The "return" operation represents a return operation within a function.
@@ -109,7 +109,7 @@ def ReturnOp : Mu_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>, Terminato
   let hasVerifier = 1;
 }
 
-def BreakOp : Mu_Op<"break", [Pure, ParentOneOf<["IfOp"]>, Terminator]> {
+def BreakOp : Mu_Op<"break", [Pure, ParentOneOf<["IfOp", "IfElseOp"]>, Terminator]> {
   let summary = "break operation";
   let description = [{
     The "break" operation represents a break operation within a function.
@@ -267,8 +267,8 @@ def ParenOp : Mu_Op<"paren", [Pure]> {
     precedents.
   }];
 
-  let arguments = (ins Mu_Type:$value);
-  let results = (outs Mu_Type:$res);
+  let arguments = (ins Mu_Any:$value);
+  let results = (outs Mu_Any:$res);
 
   // Indicate that the operation has a custom parser and printer method.
   let hasCustomAssemblyFormat = 1;
@@ -507,6 +507,48 @@ def SubOp : Mu_Op<"sub", [Pure]> {
   // Allow building a SubOp with from the two input operands.
   let builders = [
     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
+// CmpOp - comparison operations returning i1
+//===----------------------------------------------------------------------===//
+
+def CmpOp : Mu_Op<"cmp", [Pure, SameTypeOperands]> {
+  let summary = "Comparison operation for two values.";
+  let description = [{
+    The "cmp" operation compares two Mu values using the given predicate
+    attribute and returns a boolean (i1) result.
+  }];
+
+  let arguments = (ins StrAttr:$predicate, Mu_Type:$lhs, Mu_Type:$rhs);
+  let results = (outs Mu_Bool:$res);
+
+  let assemblyFormat = "$predicate `,` $lhs `,` $rhs attr-dict `:` type($lhs) `->` type($res)";
+
+  let builders = [
+    OpBuilder<(ins "StringRef":$predicate, "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
+// CallOp - function call
+//===----------------------------------------------------------------------===//
+
+def CallOp : Mu_Op<"call"> {
+  let summary = "Function call operation.";
+  let description = [{
+    The "call" operation calls a function with the given arguments.
+  }];
+
+  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<Mu_Any>:$args);
+  let results = (outs Variadic<Mu_Any>:$results);
+
+  let assemblyFormat = "$callee `(` $args `)` attr-dict `:` functional-type($args, $results)";
+
+  let builders = [
+    OpBuilder<(ins "StringRef":$callee, "ArrayRef<Value>":$args,
+      "ArrayRef<Type>":$results)>
   ];
 }
 

@@ -4,6 +4,7 @@ add_mlir_dialect_library(MLIRMu
         MuOps.cpp
         MuPasses.cpp
         MuMLIRGen.cpp
+        MuToLLVM.cpp
 
         ADDITIONAL_HEADER_DIRS
         ${PROJECT_SOURCE_DIR}/include/Mu
@@ -16,4 +17,9 @@ add_mlir_dialect_library(MLIRMu
         MLIRIR
         MLIRInferTypeOpInterface
         MLIRFuncDialect
+        MLIRArithDialect
+        MLIRControlFlowDialect
+        MLIRMemRefDialect
+        MLIRTransforms
+        MLIRTransformUtils
         )

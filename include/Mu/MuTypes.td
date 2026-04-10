@@ -28,12 +28,13 @@ def Mu_CustomType : Mu_DummyType<"Custom", "custom"> {
     let assemblyFormat = "`<` $value `>`";
 }
 
-// TODO Hardcoded Mu_Type to I32 for now
-// Provide a definition of the types that are used within the Toy dialect.
-def Mu_Type : AnyTypeOf<[I32]>;
+// Provide a definition of the types that are used within the Mu dialect.
+def Mu_Type : AnyTypeOf<[I32, F32]>;
 
 def Mu_Bool : AnyTypeOf<[I1]>;
 
 def Mu_Any : AnyTypeOf<[Mu_Type, Mu_Bool]>;
+
+def Mu_Ptr : AnyTypeOf<[MemRefOf<[I32]>, MemRefOf<[F32]>, MemRefOf<[I1]>]>;
 
 #endif // MU_TYPES

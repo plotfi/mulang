@@ -424,6 +424,7 @@ struct ConstantExpression : public Expression {
     return std::stoi(constant);
   }
 
+  fn getConstant() const -> const std::string & { return constant; }
   fn getConstantType() const -> mu::ast::enums::ConstantType { return constantType; }
 
   fn getType() const -> mu::ast::enums::Type {
@@ -497,6 +498,11 @@ struct CallExpression : public Expression {
 
   static bool classof(const ASTNode *node) {
     return node->getKind() == ASTNodeType::CallExpr;
+  }
+
+  fn getName() const -> const std::string & { return name; }
+  fn getExprList() const -> const OptionalOwnedRef<ExpressionList> & {
+    return exprList;
   }
 
 private:
@@ -689,6 +695,9 @@ struct IterationWhileStatement : public Statement {
     return node->getKind() == ASTNodeType::IterationWhileStat;
   }
 
+  fn getCondition() const -> Ref<Expression> { return expr; }
+  fn getBody() const -> Ref<CompoundStatement> { return body; }
+
 private:
   Ref<Expression> expr;
   Ref<CompoundStatement> body;
@@ -750,6 +759,8 @@ struct AssignmentStatement : public Statement {
   static bool classof(const ASTNode *node) {
     return node->getKind() == ASTNodeType::AssignmentStat;
   }
+
+  fn getName() const -> const std::string & { return name; }
 
 private:
   Ref<Expression> expr;

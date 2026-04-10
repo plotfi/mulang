@@ -2,10 +2,16 @@
 
 // CHECK: module {
 // CHECK-NEXT:   mu.func private @f(%arg0: i32) -> i32 {
+// CHECK-NEXT:     %alloca = memref.alloca() : memref<i32>
+// CHECK-NEXT:     memref.store %arg0, %alloca[] : memref<i32>
 // CHECK-NEXT:     %0 = mu.mlir.constant(42 : i32) : i32
-// CHECK-NEXT:     %1 = mu.paren %0 : i32
-// CHECK-NEXT:     %2 = mu.add %arg0, %1 : i32
-// CHECK-NEXT:     mu.return %2 : i32
+// CHECK-NEXT:     %alloca_0 = memref.alloca() : memref<i32>
+// CHECK-NEXT:     memref.store %0, %alloca_0[] : memref<i32>
+// CHECK-NEXT:     %1 = memref.load %alloca[] : memref<i32>
+// CHECK-NEXT:     %2 = memref.load %alloca_0[] : memref<i32>
+// CHECK-NEXT:     %3 = mu.paren %2 : i32
+// CHECK-NEXT:     %4 = mu.add %1, %3 : i32
+// CHECK-NEXT:     mu.return %4 : i32
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
 
