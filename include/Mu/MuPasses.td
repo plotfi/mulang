@@ -27,4 +27,13 @@ def MuSwitchBarFoo: Pass<"mu-switch-bar-foo", "::mlir::ModuleOp"> {
   }];
 }
 
+def MuLoweringPass : Pass<"mu-lower-to-llvm", "::mlir::ModuleOp"> {
+  let summary = "Lower Mu dialect to arith/func/cf, then to LLVM IR dialect.";
+  let description = [{
+    Lowers all Mu dialect operations to a combination of arith, func, and cf
+    dialects. The output can then be further lowered to the LLVM dialect and
+    translated to LLVM IR using the standard MLIR pipeline.
+  }];
+}
+
 #endif // MU_PASS

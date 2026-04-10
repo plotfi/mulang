@@ -21,13 +21,29 @@
 #include <vector>
 
 #include "Mu/MuMLIRGen.h"
+#include "Mu/MuPasses.h"
 
+#include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
+#include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
+#include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVMPass.h"
+#include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
+#include "mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/ControlFlow/IR/ControlFlow.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/IR/AsmState.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/Parser/Parser.h"
+#include "mlir/Pass/PassManager.h"
+#include "mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h"
+#include "mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h"
+#include "mlir/Target/LLVMIR/Export.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
@@ -101,7 +117,7 @@ fn parseInputFile(llvm::StringRef filename)
 }
 
 enum InputType { Mu, MLIR };
-enum Action { None, DumpAST, DumpMLIR };
+enum Action { None, DumpAST, DumpMLIR, DumpLLVM };
 
 cl::opt<enum InputType> inputType(
     "x", cl::init(Mu), cl::desc("Decided the kind of output desired"),
@@ -112,13 +128,12 @@ cl::opt<enum InputType> inputType(
 cl::opt<enum Action> emitAction(
     "emit", cl::desc("Select the kind of output desired"),
     cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
-    cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")));
+    cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")),
+    cl::values(clEnumValN(DumpLLVM, "llvm", "output LLVM IR")));
 
-fn dumpMLIR() -> int {
-  mlir::MLIRContext context;
-  // Load our Dialect in this MLIR Context.
-  context.getOrLoadDialect<mlir::mu::MuDialect>();
-
+/// Load a module from a .mu source file or .mlir file.
+fn loadModule(mlir::MLIRContext &context)
+    -> mlir::OwningOpRef<mlir::ModuleOp> {
   // Handle '.mu' input to the compiler.
   if (inputType != InputType::MLIR &&
       !llvm::StringRef(inputFilename).ends_with(".mlir")) {
@@ -133,13 +148,8 @@ fn dumpMLIR() -> int {
 
     auto moduleAST = parseInputFile(inputFilename);
     if (!moduleAST)
-      return 6;
-    mlir::OwningOpRef<mlir::ModuleOp> module = mu::mlirGen(context, *moduleAST);
-    if (!module)
-      return 1;
-
-    module->dump();
-    return 0;
+      return nullptr;
+    return mu::mlirGen(context, *moduleAST);
   }
 
   // Otherwise, the input is '.mlir'.
@@ -147,20 +157,70 @@ fn dumpMLIR() -> int {
       llvm::MemoryBuffer::getFileOrSTDIN(inputFilename);
   if (std::error_code ec = fileOrErr.getError()) {
     llvm::errs() << "Could not open input file: " << ec.message() << "\n";
-    return -1;
+    return nullptr;
   }
 
-  // Parse the input mlir.
   llvm::SourceMgr sourceMgr;
   sourceMgr.AddNewSourceBuffer(std::move(*fileOrErr), llvm::SMLoc());
-  mlir::OwningOpRef<mlir::ModuleOp> module =
-      mlir::parseSourceFile<mlir::ModuleOp>(sourceMgr, &context);
-  if (!module) {
-    llvm::errs() << "Error can't load file " << inputFilename << "\n";
-    return 3;
-  }
+  return mlir::parseSourceFile<mlir::ModuleOp>(sourceMgr, &context);
+}
+
+fn dumpMLIR() -> int {
+  mlir::MLIRContext context;
+  context.getOrLoadDialect<mlir::mu::MuDialect>();
+  context.getOrLoadDialect<mlir::arith::ArithDialect>();
+  context.getOrLoadDialect<mlir::memref::MemRefDialect>();
+  context.getOrLoadDialect<mlir::cf::ControlFlowDialect>();
+
+  auto module = loadModule(context);
+  if (!module)
+    return 1;
 
   module->dump();
+  return 0;
+}
+
+fn dumpLLVM() -> int {
+  mlir::MLIRContext context;
+  context.getOrLoadDialect<mlir::mu::MuDialect>();
+  context.getOrLoadDialect<mlir::arith::ArithDialect>();
+  context.getOrLoadDialect<mlir::func::FuncDialect>();
+  context.getOrLoadDialect<mlir::cf::ControlFlowDialect>();
+  context.getOrLoadDialect<mlir::LLVM::LLVMDialect>();
+  context.getOrLoadDialect<mlir::memref::MemRefDialect>();
+
+  auto module = loadModule(context);
+  if (!module)
+    return 1;
+
+  // Build the lowering pipeline:
+  // 1. Mu -> arith/func/cf/memref
+  // 2. arith/func/cf/memref -> LLVM dialect
+  // 3. Reconcile unrealized casts
+  mlir::PassManager pm(&context);
+  pm.addPass(mlir::mu::createMuLoweringPass());
+  pm.addPass(mlir::createArithToLLVMConversionPass());
+  pm.addPass(mlir::createConvertControlFlowToLLVMPass());
+  pm.addPass(mlir::createFinalizeMemRefToLLVMConversionPass());
+  pm.addPass(mlir::createConvertFuncToLLVMPass());
+  pm.addPass(mlir::createReconcileUnrealizedCastsPass());
+
+  if (failed(pm.run(*module))) {
+    llvm::errs() << "Failed to lower Mu to LLVM dialect\n";
+    return 1;
+  }
+
+  // Translate MLIR LLVM dialect to LLVM IR.
+  mlir::registerBuiltinDialectTranslation(context);
+  mlir::registerLLVMDialectTranslation(context);
+  llvm::LLVMContext llvmContext;
+  auto llvmModule = mlir::translateModuleToLLVMIR(*module, llvmContext);
+  if (!llvmModule) {
+    llvm::errs() << "Failed to translate to LLVM IR\n";
+    return 1;
+  }
+
+  llvmModule->print(llvm::outs(), nullptr);
   return 0;
 }
 
@@ -201,6 +261,11 @@ fn main(int argc, char **argv)->int {
   }
   case Action::DumpMLIR: {
     if (dumpMLIR())
+      return -1;
+    break;
+  }
+  case Action::DumpLLVM: {
+    if (dumpLLVM())
       return -1;
     break;
   }

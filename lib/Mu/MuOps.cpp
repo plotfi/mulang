@@ -323,6 +323,30 @@ void AndBoolOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 
 
 ///===---------------------------------------------------------------------===//
+// CmpOp
+///===---------------------------------------------------------------------===//
+
+void CmpOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  llvm::StringRef predicate, mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(builder.getI1Type());
+  state.addOperands({lhs, rhs});
+  state.addAttribute("predicate", builder.getStringAttr(predicate));
+}
+
+///===---------------------------------------------------------------------===//
+// CallOp
+///===---------------------------------------------------------------------===//
+
+void CallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                   llvm::StringRef callee, llvm::ArrayRef<mlir::Value> args,
+                   llvm::ArrayRef<mlir::Type> results) {
+  state.addOperands(args);
+  state.addAttribute("callee",
+                     mlir::SymbolRefAttr::get(builder.getContext(), callee));
+  state.addTypes(results);
+}
+
+///===---------------------------------------------------------------------===//
 /// IfOp
 /// ===--------------------------------------------------------------------===//
 
@@ -384,8 +408,10 @@ void IfElseOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                      mlir::Value cond) {
   state.addOperands(cond);
   OpBuilder::InsertionGuard guard(builder);
-  Region *region = state.addRegion();
-  builder.createBlock(region);
+  Region *trueRegion = state.addRegion();
+  builder.createBlock(trueRegion);
+  Region *falseRegion = state.addRegion();
+  builder.createBlock(falseRegion);
 }
 
 } // namespace mu

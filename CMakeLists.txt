@@ -99,6 +99,17 @@ target_link_libraries(muc
     MLIRSideEffectInterfaces
     MLIRTransforms
     MLIRControlFlowInterfaces
+    MLIRPass
+    MLIRTargetLLVMIRExport
+    MLIRLLVMDialect
+    MLIRBuiltinToLLVMIRTranslation
+    MLIRLLVMToLLVMIRTranslation
+    MLIRArithToLLVM
+    MLIRControlFlowToLLVM
+    MLIRMemRefDialect
+    MLIRMemRefToLLVM
+    MLIRFuncToLLVM
+    MLIRReconcileUnrealizedCasts
     ${LIBS})
 
 add_subdirectory(test)
